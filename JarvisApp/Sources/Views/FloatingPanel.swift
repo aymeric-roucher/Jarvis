@@ -80,7 +80,10 @@ final class FloatingPanelHandler {
     }
     
     func hide() {
-        panel?.close()
-        panel = nil
+        if let panel = panel {
+            panel.orderOut(nil)
+            self.panel = nil
+            Task { @MainActor in self.onClose?() }
+        }
     }
 }

@@ -3,7 +3,7 @@ import Foundation
 struct CerebrasClient {
     let apiKey: String
     
-    func processCommand(input: String) async throws -> ToolCallResponse? {
+    func processCommand(input: String, defaultBrowser: String, openAppsDescription: String) async throws -> ToolCallResponse? {
         let url = URL(string: "https://router.huggingface.co/v1/chat/completions")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -15,8 +15,8 @@ struct CerebrasClient {
         Output ONLY valid JSON with keys: "thought", "tool_name", "tool_arguments".
         Tools available:
         - type(text: String): Type text into active window.
-        - open_app(name_or_url: String): Open app or URL.
-        - switch_to(app_name: String): Switch focus to app.
+        - open_app(name_or_url: String): Open app or URL. Default browser is "\(defaultBrowser)".
+        - switch_to(app_name: String): Switch focus to app. Currently open apps: \(openAppsDescription).
         - deep_research(topic: String): Research a topic.
         """
         

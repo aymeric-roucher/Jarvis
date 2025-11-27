@@ -255,8 +255,11 @@ class AppState: ObservableObject {
                     return
                 }
                 
+                let defaultBrowser = Self.currentDefaultBrowserName()
+                let openAppsDescription = Self.currentOpenAppsDescription()
+                
                 let cerebras = CerebrasClient(apiKey: hfKey)
-                if let toolCall = try await cerebras.processCommand(input: transcript) {
+                if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription) {
                     let reasoning = toolCall.thought ?? "Executing \(toolCall.tool_name)..."
                     log("Cerebras output: \(reasoning)")
                     log("Tool call: \(toolCall.tool_name), \(toolCall.tool_arguments)")
@@ -284,6 +287,22 @@ class AppState: ObservableObject {
         let msg = ChatMessage(role: role, content: content)
         messages.append(msg)
         ToastManager.shared.show(message: msg)
+    }
+    
+    private static func currentDefaultBrowserName() -> String {
+        if let url = URL(string: "http://apple.com"),
+           let appURL = NSWorkspace.shared.urlForApplication(toOpen: url) {
+            return FileManager.default.displayName(atPath: appURL.path)
+        }
+        return "Safari"
+    }
+    
+    private static func currentOpenAppsDescription() -> String {
+        let names = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular }
+            .compactMap { $0.localizedName }
+            .sorted()
+        return names.isEmpty ? "None detected" : names.joined(separator: ", ")
     }
 }
 
