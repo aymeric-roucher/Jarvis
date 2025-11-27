@@ -13,22 +13,11 @@ defaults delete com.aymeric.Jarvis || true # '|| true' prevents script from fail
 # Truncate in-app log for clean runs
 : > Jarvis_Log.txt
 
-# Clean previous build
 rm -rf "$BUILD_DIR"
 rm -rf "$APP_BUNDLE"
 
-# Build using xcodebuild
-# We point it to the directory containing Package.swift
-xcodebuild -scheme "$SCHEME_NAME" \
-           -configuration Release \
-           -derivedDataPath "$BUILD_DIR" \
-           -destination 'platform=macOS' \
-           -quiet \
-           CODE_SIGN_IDENTITY="-" \
-           CODE_SIGNING_REQUIRED="NO" \
-           CODE_SIGNING_ALLOWED="NO"
-
-# Check if build succeeded
+echo "Building via swift build (release)..."
+swift build -c release
 if [ $? -ne 0 ]; then
     echo "Build failed."
     exit 1
@@ -39,8 +28,8 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 # Locate the built executable
-# xcodebuild places artifacts in a slightly different structure
-BINARY_PATH=$(find "$BUILD_DIR" -name "$APP_NAME" -type f -perm +111 | grep "Release" | head -n 1)
+# swift build puts binaries in .build/release
+BINARY_PATH=".build/release/$APP_NAME"
 
 if [ -z "$BINARY_PATH" ]; then
     echo "Could not find compiled binary."

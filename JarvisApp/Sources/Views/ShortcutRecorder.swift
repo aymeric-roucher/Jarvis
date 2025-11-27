@@ -12,49 +12,44 @@ struct ShortcutRecorder: View {
     @State private var displayKey: String = ""
     
     var body: some View {
-        VStack {
-            Text("Global Shortcut")
-                .font(.headline)
-            
-            HStack(spacing: 10) {
-                Button(action: { isRecording = true }) {
-                    HStack(spacing: 5) {
-                        if isRecording {
-                            Text("Press your shortcut combo...")
-                                .foregroundColor(.blue)
-                        } else {
-                            Text(displayModifier)
-                                .font(.body)
-                                .fontWeight(.bold)
-                                .frame(minWidth: 40)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(6)
-                            
-                            Text("+")
-                            
-                            Text(displayKey)
-                                .font(.body)
-                                .fontWeight(.bold)
-                                .frame(minWidth: 40)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(6)
-                        }
+        HStack(spacing: 10) {
+            Button(action: { isRecording = true }) {
+                HStack(spacing: 5) {
+                    if isRecording {
+                        Text("Press your shortcut combo...")
+                            .foregroundColor(.blue)
+                    } else {
+                        Text(displayModifier)
+                            .font(.body)
+                            .fontWeight(.bold)
+                            .frame(minWidth: 40)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(6)
+                        
+                        Text("+")
+                        
+                        Text(displayKey)
+                            .font(.body)
+                            .fontWeight(.bold)
+                            .frame(minWidth: 40)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(6)
                     }
-                    .padding(8)
-                    .background(RoundedRectangle(cornerRadius: 10).stroke(isRecording ? Color.blue : Color.gray, lineWidth: 2))
                 }
-                .buttonStyle(.plain)
-                .onAppear(perform: updateDisplay)
-                .onChange(of: savedModifier) { _, _ in updateDisplay() }
-                .onChange(of: savedKey) { _, _ in updateDisplay() }
-                
-                if isRecording {
-                    Button("Cancel") { isRecording = false }
-                }
+                .padding(8)
+                .background(RoundedRectangle(cornerRadius: 10).stroke(isRecording ? Color.blue : Color.gray, lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .onAppear(perform: updateDisplay)
+            .onChange(of: savedModifier) { _, _ in updateDisplay() }
+            .onChange(of: savedKey) { _, _ in updateDisplay() }
+            
+            if isRecording {
+                Button("Cancel") { isRecording = false }
             }
         }
         .background(KeySniffer(isRecording: $isRecording, onKey: { mod, key in

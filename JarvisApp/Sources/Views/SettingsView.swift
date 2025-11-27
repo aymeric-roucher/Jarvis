@@ -2,9 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @AppStorage("openaiApiKey") var openaiApiKey: String = ""
-    @AppStorage("hfApiKey") var hfApiKey: String = ""
-    @State private var logContent: String = "Loading logs..."
     
     var body: some View {
         HStack(spacing: 0) {
@@ -17,7 +14,8 @@ struct SettingsView: View {
                     .padding(.horizontal, 10)
                     .padding(.top, 20)
                 
-                SidebarButton(title: "Home", icon: "house", tab: .home, selection: $appState.selectedTab)
+                SidebarButton(title: "Chatbot", icon: "bubble.left.and.bubble.right", tab: .home, selection: $appState.selectedTab)
+                SidebarButton(title: "Logs", icon: "doc.plaintext", tab: .logs, selection: $appState.selectedTab)
                 SidebarButton(title: "Dictionary", icon: "book", tab: .dictionary, selection: $appState.selectedTab)
                 SidebarButton(title: "Style", icon: "text.quote", tab: .style, selection: $appState.selectedTab)
                 
@@ -29,7 +27,7 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 10)
                 
-                SidebarButton(title: "Settings", icon: "gear", tab: .settings, selection: $appState.selectedTab)
+                SidebarButton(title: "Settings", icon: "gearshape.2", tab: .settings, selection: $appState.selectedTab)
                     .padding(.bottom, 20)
             }
             .frame(width: 200)
@@ -41,41 +39,21 @@ struct SettingsView: View {
             VStack {
                 switch appState.selectedTab {
                 case .home:
-                    HomeView(logContent: $logContent, loadLogs: loadLogs, clearLogs: clearLogs)
+                    HomeView()
+                case .logs:
+                    LogsView()
                 case .dictionary:
                     DictionaryView()
                 case .style:
                     StyleView()
                 case .settings:
-                    GeneralSettingsView(openaiApiKey: $openaiApiKey)
+                    GeneralSettingsView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(width: 800, height: 500)
-        .onAppear { loadLogs() }
-    }
-    
-    func loadLogs() {
-        let appBundlePath = Bundle.main.bundleURL
-        let projectRoot = appBundlePath.deletingLastPathComponent()
-        let logFile = projectRoot.appendingPathComponent("Jarvis_Log.txt")
-        
-        if let content = try? String(contentsOf: logFile) {
-            logContent = content
-        } else {
-            logContent = "No logs found."
-        }
-    }
-    
-    func clearLogs() {
-        let appBundlePath = Bundle.main.bundleURL
-        let projectRoot = appBundlePath.deletingLastPathComponent()
-        let logFile = projectRoot.appendingPathComponent("Jarvis_Log.txt")
-        
-        try? "".write(to: logFile, atomically: true, encoding: .utf8)
-        loadLogs()
     }
 }
 
@@ -108,47 +86,42 @@ struct SidebarButton: View {
 // Subviews for cleaner code
 
 struct HomeView: View {
-    @Binding var logContent: String
-    var loadLogs: () -> Void
-    var clearLogs: () -> Void
-    
-    let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+    @EnvironmentObject var appState: AppState
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Recent Activity")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Chatbot")
                 .font(.title2)
                 .padding(.top)
                 .padding(.horizontal)
             
-            let appBundlePath = Bundle.main.bundleURL
-            let projectRoot = appBundlePath.deletingLastPathComponent()
-            let logPath = projectRoot.appendingPathComponent("Jarvis_Log.txt").path
-            
-            Text("Logs at: \(logPath)")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-                .textSelection(.enabled)
-            
-            ScrollView {
-                Text(logContent)
-                    .font(.system(.caption, design: .monospaced))
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(appState.messages) { msg in
+                            ChatMessageRow(message: msg)
+                                .id(msg.id)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                }
+                .onChange(of: appState.messages.count) { _, _ in
+                    if let last = appState.messages.last {
+                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                    }
+                }
             }
-            .background(Color(nsColor: .textBackgroundColor))
-            .cornerRadius(8)
-            .padding(.horizontal)
-            
-            HStack {
-                Spacer()
-                Button("Clear Logs", action: clearLogs)
-            }
-            .padding()
         }
-        .onReceive(timer) { _ in
-            loadLogs()
+    }
+}
+
+struct ChatMessageRow: View {
+    var message: ChatMessage
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ToolMessageView(role: message.role, content: message.content, toolName: message.toolPayload?.name)
         }
     }
 }
@@ -187,7 +160,7 @@ import AVFoundation
 import ApplicationServices
 
 struct GeneralSettingsView: View {
-    @Binding var openaiApiKey: String
+    @AppStorage("openaiApiKey") var openaiApiKey: String = ""
     
     @State private var micStatus: Bool = false
     @State private var accessStatus: Bool = false

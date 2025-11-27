@@ -11,7 +11,7 @@ struct JarvisApp: App {
     var body: some Scene {
         // Menu Bar Icon
         MenuBarExtra("Jarvis", systemImage: "waveform.circle") {
-            Button("Home") {
+            Button("Open App") {
                 appState.selectedTab = .home
                 appState.showSettings()
             }
@@ -25,7 +25,7 @@ struct JarvisApp: App {
             Divider()
             
             Menu("Shortcuts") {
-                Button("Toggle Jarvis (⌃Space)") { appState.toggleSpotlight() }
+                Button("Toggle Jarvis (⇧Space)") { appState.toggleSpotlight() }
             }
             
             Menu("Microphone") {
@@ -41,41 +41,10 @@ struct JarvisApp: App {
             
             Divider()
             
-            Button("Help Center") { NSWorkspace.shared.open(URL(string: "https://help.jarvis.app")!) }
-            Button("Talk to support") {}
-            Button("General feedback") {}
-            
-            Divider()
-            
             Button("Quit Jarvis") {
                 NSApplication.shared.terminate(nil)
             }
         }
-        
-        // The "Spotlight" Window (single instance)
-        Window("Jarvis", id: "spotlight") {
-            SpotlightView()
-                .environmentObject(appState)
-                .onAppear {
-                    if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "spotlight" }) {
-                        window.identifier = NSUserInterfaceItemIdentifier("spotlight")
-                        window.styleMask = [.borderless, .fullSizeContentView]
-                        window.isOpaque = false
-                        window.backgroundColor = .clear
-                        window.level = .floating
-                        window.center()
-                        window.isMovableByWindowBackground = true
-                        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-                        window.standardWindowButton(.closeButton)?.isHidden = true
-                        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-                        window.standardWindowButton(.zoomButton)?.isHidden = true
-                    }
-                    log("Spotlight window appeared")
-                }
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .handlesExternalEvents(matching: Set(arrayLiteral: "spotlight"))
         
         // Settings / Dashboard Window
         Window("Jarvis Dashboard", id: "settings") {
@@ -84,7 +53,6 @@ struct JarvisApp: App {
                     .environmentObject(appState)
             } else {
                 OnboardingView(isCompleted: $hasCompletedOnboarding)
-                    .frame(width: 600, height: 500)
             }
         }
         .handlesExternalEvents(matching: Set(arrayLiteral: "settings"))
@@ -92,18 +60,20 @@ struct JarvisApp: App {
 }
 
 enum SettingsTab: String {
-    case home, dictionary, style, settings
+    case home, logs, dictionary, style, settings
 }
 
 struct ChatMessage: Identifiable {
     let id: UUID
     let role: MessageRole
     let content: String
+    let toolPayload: ToolPayload?
     
-    init(id: UUID = UUID(), role: MessageRole, content: String) {
+    init(id: UUID = UUID(), role: MessageRole, content: String, toolPayload: ToolPayload? = nil) {
         self.id = id
         self.role = role
         self.content = content
+        self.toolPayload = toolPayload
     }
 }
 
@@ -128,12 +98,10 @@ class AppState: ObservableObject {
     let audioRecorder = AudioRecorder()
     let toolManager = ToolManager()
     private let minimumRecordingDuration: TimeInterval = 0.4
-    private var panelConfigured = false
     init() {
         AppState.shared = self
         // Listen for the toggle notification here, in the persistent state object
         NotificationCenter.default.addObserver(self, selector: #selector(handleToggleNotification), name: NSNotification.Name("ToggleJarvis"), object: nil)
-        configurePanelHandler()
     }
     
     @objc func handleToggleNotification() {
@@ -142,14 +110,15 @@ class AppState: ObservableObject {
     }
     
     func toggleSpotlight() {
-        if let handler = AppDelegate.shared?.floatingPanelHandler {
-            handler.toggle(appState: self)
+        if isSpotlightVisible {
+            hideSpotlight()
+        } else {
+            showSpotlight()
         }
     }
     
     func showSpotlight() {
-        configurePanelHandler()
-        AppDelegate.shared?.floatingPanelHandler.show(appState: self)
+        AppDelegate.shared?.popupManager.show(appState: self)
         isSpotlightVisible = true
         if !isRecording {
             startRecording()
@@ -157,28 +126,11 @@ class AppState: ObservableObject {
     }
     
     func hideSpotlight() {
-        AppDelegate.shared?.floatingPanelHandler.hide()
+        AppDelegate.shared?.popupManager.hide()
         if isRecording {
             stopRecording()
         }
         isSpotlightVisible = false
-    }
-    
-    private func configurePanelHandler() {
-        guard !panelConfigured, let handler = AppDelegate.shared?.floatingPanelHandler else { return }
-        handler.configureOnClose { [weak self] in
-            Task { @MainActor in
-                self?.panelDidClose()
-            }
-        }
-        panelConfigured = true
-    }
-    
-    private func panelDidClose() {
-        isSpotlightVisible = false
-        if isRecording {
-            stopRecording()
-        }
     }
     
     func toggleRecording() {
@@ -260,9 +212,9 @@ class AppState: ObservableObject {
                 
                 let cerebras = CerebrasClient(apiKey: hfKey)
                 if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription) {
-                    let reasoning = "Executing \(toolCall.tool_name)..."
+                    let toolDescription = formattedToolCall(toolCall)
                     log("Tool call: \(toolCall.tool_name), \(toolCall.tool_arguments)")
-                    pushEphemeral(role: .assistant, content: reasoning)
+                    pushToolMessage(name: toolDescription.name, args: toolDescription.args)
                     
                     // For typing, hide panel to return focus to previous app
                     if toolCall.tool_name == "type" {
@@ -293,6 +245,14 @@ class AppState: ObservableObject {
         ToastManager.shared.show(message: msg)
     }
     
+    @MainActor
+    private func pushToolMessage(name: String, args: String) {
+        let rendered = args.isEmpty ? name : args
+        let msg = ChatMessage(role: .tool, content: rendered, toolPayload: ToolPayload(name: name, arguments: args))
+        messages.append(msg)
+        ToastManager.shared.show(message: msg)
+    }
+    
     private static func currentDefaultBrowserName() -> String {
         if let url = URL(string: "http://apple.com"),
            let appURL = NSWorkspace.shared.urlForApplication(toOpen: url) {
@@ -308,6 +268,15 @@ class AppState: ObservableObject {
             .sorted()
         return names.isEmpty ? "None detected" : names.joined(separator: ", ")
     }
+
+    private func formattedToolCall(_ toolCall: ToolCallResponse) -> (name: String, args: String) {
+        switch toolCall.tool_arguments {
+        case .text(let text):
+            return (toolCall.tool_name, text)
+        case .none:
+            return (toolCall.tool_name, "")
+        }
+    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -316,7 +285,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var pollingTimer: Timer? // Unused now, kept for potential future hold-to-talk
     var lastKeyCode: UInt32 = 0
     var lastModifiers: UInt32 = 0
-    let floatingPanelHandler = FloatingPanelHandler()
+    let popupManager = MenuPopupManager()
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
@@ -437,4 +406,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return noErr
         }, 1, &releaseType, nil, nil)
     }
+}
+struct ToolPayload: Codable {
+    let name: String
+    let arguments: String
 }

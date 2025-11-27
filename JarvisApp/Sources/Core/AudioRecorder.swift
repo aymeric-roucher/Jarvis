@@ -116,11 +116,6 @@ class AudioRecorder: NSObject, ObservableObject {
                 level = (power - minDb) / (0.0 - minDb)
             }
             
-            // Debug: Print level occasionally
-            if Int.random(in: 0...20) == 0 {
-                log("Mic Level: \(level) (Power: \(power))")
-            }
-            
             DispatchQueue.main.async {
                 if self.audioLevels.count > 40 { self.audioLevels.removeFirst() }
                 self.audioLevels.append(level)

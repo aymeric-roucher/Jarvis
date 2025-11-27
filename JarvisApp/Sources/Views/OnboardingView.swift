@@ -6,9 +6,7 @@ struct OnboardingView: View {
     @Binding var isCompleted: Bool
     @AppStorage("openaiApiKey") var openaiApiKey: String = ""
     @AppStorage("hfApiKey") var hfApiKey: String = ""
-    @State private var page = 0
     
-    // Validation states
     @State private var openaiStatus: ValidationStatus = .none
     @State private var hfStatus: ValidationStatus = .none
     @State private var micStatus: ValidationStatus = .none
@@ -37,110 +35,91 @@ struct OnboardingView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            if page == 0 {
+        VStack(spacing: 18) {
+            VStack(spacing: 4) {
                 Text("Welcome to Jarvis")
-                    .font(.largeTitle)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                 Text("Your AI Secretary for macOS")
-                    .font(.title2)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
-                
-                Image(systemName: "waveform.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
-                    .padding()
-                
-                Text("Jarvis needs a few permissions to work its magic.")
-                    .multilineTextAlignment(.center)
-                
+            }
+            
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Shortcut")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                 ShortcutRecorder()
-                    .padding()
-                
-                Button("Let's Start") {
-                    withAnimation { page += 1 }
-                }
-                .buttonStyle(.borderedProminent)
-                .onAppear { loadEnv() }
-                
-            } else if page == 1 {
-                Text("API Keys")
-                    .font(.title)
-                Text("Jarvis uses OpenAI Whisper for hearing and Cerebras for thinking.")
-                    .font(.caption)
-                
-                Form {
-                    Section {
-                        HStack {
-                            SecureField("OpenAI API Key", text: $openaiApiKey)
-                                .onChange(of: openaiApiKey) { oldValue, newValue in openaiStatus = .none }
-                            StatusIcon(status: openaiStatus)
-                        }
-                        HStack {
-                            SecureField("Hugging Face Token", text: $hfApiKey)
-                                .onChange(of: hfApiKey) { oldValue, newValue in hfStatus = .none }
-                            StatusIcon(status: hfStatus)
-                        }
-                    } header: {
-                        Text("Enter Keys")
-                    } footer: {
-                        if openaiStatus == .invalid || hfStatus == .invalid {
-                            Text("One or more keys are invalid.").foregroundColor(.red)
-                        }
-                    }
-                }
-                .padding()
-                
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(Color(nsColor: .textBackgroundColor))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 3)
+            
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Button("Back") { withAnimation { page -= 1 } }
+                    Text("API Keys")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                     Spacer()
-                    Button("Verify & Next") {
-                        validateKeys()
-                    }
-                    .disabled(openaiApiKey.isEmpty || hfApiKey.isEmpty)
                 }
-                
-            } else if page == 2 {
+                HStack {
+                    SecureField("OpenAI API Key", text: $openaiApiKey)
+                        .onChange(of: openaiApiKey) { _, _ in openaiStatus = .none }
+                    StatusIcon(status: openaiStatus)
+                }
+                HStack {
+                    SecureField("Hugging Face Token", text: $hfApiKey)
+                        .onChange(of: hfApiKey) { _, _ in hfStatus = .none }
+                    StatusIcon(status: hfStatus)
+                }
+                Button("Check APIs") { validateKeys() }
+                    .buttonStyle(.bordered)
+                    .padding(.top, 4)
+            }
+            .padding(14)
+            .background(Color(nsColor: .textBackgroundColor))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 3)
+            
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Permissions")
-                    .font(.title)
-                
-                VStack(alignment: .leading, spacing: 15) {
-                    HStack {
-                        Image(systemName: "mic.fill")
-                        Text("Microphone")
-                        Spacer()
-                        StatusIcon(status: micStatus)
-                        Button("Request") {
-                            requestMic()
-                        }
-                        .disabled(micStatus == .valid)
-                    }
-                    HStack {
-                        Image(systemName: "keyboard.fill")
-                        Text("Accessibility (Typing)")
-                        Spacer()
-                        StatusIcon(status: accessStatus)
-                        Button("Check") {
-                            checkAccessibility()
-                        }
-                    }
-                }
-                .padding()
-                .onAppear { checkPermissions() }
-                
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                 HStack {
-                    Button("Back") { withAnimation { page -= 1 } }
+                    Image(systemName: "mic.fill")
+                    Text("Microphone")
                     Spacer()
-                    Button("Finish") {
-                        NotificationCenter.default.post(name: NSNotification.Name("ReloadHotkey"), object: nil)
-                        isCompleted = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(micStatus != .valid || accessStatus != .valid)
+                    StatusIcon(status: micStatus)
+                    Button("Request") { requestMic() }
+                        .disabled(micStatus == .valid)
+                }
+                HStack {
+                    Image(systemName: "keyboard.fill")
+                    Text("Accessibility (Typing)")
+                    Spacer()
+                    StatusIcon(status: accessStatus)
+                    Button("Check") { checkAccessibility() }
                 }
             }
+            .padding(14)
+            .background(Color(nsColor: .textBackgroundColor))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 3)
+            
+            HStack {
+                Spacer()
+                Button("Finish") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ReloadHotkey"), object: nil)
+                    validateAllAndFinish()
+                }
+                .buttonStyle(.borderedProminent)
+            }
         }
-        .padding(40)
-        .frame(width: 600, height: 500)
+        .padding(24)
+        .frame(width: 480, height: 720)
+        .background(Color(nsColor: .underPageBackgroundColor))
+        .onAppear {
+            loadEnv()
+            checkPermissions()
+        }
     }
     
     func loadEnv() {
@@ -171,21 +150,14 @@ struct OnboardingView: View {
     }
     
     func validateKeys() {
-        openaiStatus = .checking
-        hfStatus = .checking
-        
-        Task {
-            // Mock validation for speed in prototype
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            openaiStatus = openaiApiKey.count > 20 ? .valid : .invalid
-            
-            // Verify HF
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            hfStatus = hfApiKey.count > 20 ? .valid : .invalid
-            
-            if openaiStatus == .valid && hfStatus == .valid {
-                withAnimation { page += 1 }
-            }
+        openaiStatus = openaiApiKey.count > 20 ? .valid : .invalid
+        hfStatus = hfApiKey.count > 20 ? .valid : .invalid
+    }
+    
+    func validateAllAndFinish() {
+        validateKeys()
+        if openaiStatus == .valid && hfStatus == .valid && micStatus == .valid && accessStatus == .valid {
+            isCompleted = true
         }
     }
     
