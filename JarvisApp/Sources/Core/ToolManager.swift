@@ -31,14 +31,13 @@ struct ToolManager {
         }
     }
 
-    private func handleToolError(toolName: String, error: Error) {        let errorMessage = "Tool '\(toolName)' failed: \(error.localizedDescription)"
+    private func handleToolError(toolName: String, error: Error) {
+        let errorMessage = "Tool '\(toolName)' failed: \(error.localizedDescription)"
         log("Tool execution error: \(errorMessage)")
 
-        // Show error in chatbot and as independent toast
         Task { @MainActor in
             let errorMsg = ChatMessage(role: .system, content: errorMessage)
             AppState.shared?.messages.append(errorMsg)
-            ToastManager.shared.show(message: errorMsg)
         }
     }
     

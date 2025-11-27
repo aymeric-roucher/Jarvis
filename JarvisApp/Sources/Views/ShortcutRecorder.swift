@@ -21,28 +21,32 @@ struct ShortcutRecorder: View {
                             .foregroundColor(.blue)
                     } else {
                         Text(displayModifier)
-                            .font(.body)
+                            .font(Theme.bodyFont)
                             .fontWeight(.bold)
+                            .foregroundColor(Theme.textColor)
                             .frame(minWidth: 40)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 5)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(6)
-                        
+                            .background(Theme.buttonBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+
                         Text("+")
-                        
+                            .foregroundColor(Theme.secondaryText)
+
                         Text(displayKey)
-                            .font(.body)
+                            .font(Theme.bodyFont)
                             .fontWeight(.bold)
+                            .foregroundColor(Theme.textColor)
                             .frame(minWidth: 40)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 5)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(6)
+                            .background(Theme.buttonBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
                     }
                 }
                 .padding(8)
-                .background(RoundedRectangle(cornerRadius: 10).stroke(isRecording ? Color.blue : Color.gray, lineWidth: 2))
+                .background(isRecording ? Theme.inputBackground : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
             }
             .buttonStyle(.plain)
             .onAppear(perform: updateDisplay)

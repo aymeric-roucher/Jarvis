@@ -20,6 +20,9 @@ enum Theme {
     static let textColor = Color.black
     static let secondaryText = Color.gray
 
+    // MARK: Dimensions
+    static let cornerRadius: CGFloat = 12
+
     // MARK: Tool Icons
     static let toolIcons: [String: String] = [
         "type": "rectangle.and.pencil.and.ellipsis",
@@ -122,13 +125,18 @@ enum Theme {
     }
 
     static func iconForTool(name: String?, arguments: String?) -> String {
+        log("iconForTool called - name: \(name ?? "nil"), arguments: \(arguments ?? "nil")")
         if name == "open_app", let args = arguments,
            let data = args.data(using: .utf8),
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let appName = json["app_name"] as? String {
-            return appIcon(for: appName)
+            let icon = appIcon(for: appName)
+            log("iconForTool - matched app: \(appName) -> icon: \(icon)")
+            return icon
         }
-        return toolIcon(for: name)
+        let icon = toolIcon(for: name)
+        log("iconForTool - using toolIcon for name: \(name ?? "nil") -> icon: \(icon)")
+        return icon
     }
 }
 
@@ -143,7 +151,7 @@ struct ThemeButtonStyle: ButtonStyle {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(configuration.isPressed ? Theme.borderColor : Theme.buttonBackground)
-            .overlay(Rectangle().stroke(Theme.buttonBorder, lineWidth: 1))
+            .clipShape(Capsule())
     }
 }
 
@@ -155,6 +163,7 @@ struct ThemePrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 24)
             .padding(.vertical, 10)
             .background(configuration.isPressed ? Color(white: 0.2) : Theme.textColor)
+            .clipShape(Capsule())
     }
 }
 
@@ -171,7 +180,8 @@ struct ThemedTextField: View {
             .foregroundColor(Theme.textColor)
             .padding(10)
             .background(Theme.inputBackground)
-            .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
     }
 }
 
@@ -195,9 +205,27 @@ struct ThemedTextArea: View {
                 .foregroundColor(Theme.textColor)
                 .padding(8)
                 .scrollContentBackground(.hidden)
-                .background(Theme.inputBackground)
-                .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
         }
+        .background(Theme.inputBackground)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
         .frame(height: height)
+    }
+}
+
+// MARK: - Themed Container
+struct ThemedBox<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(14)
+            .background(Theme.sidebarBackground)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
     }
 }

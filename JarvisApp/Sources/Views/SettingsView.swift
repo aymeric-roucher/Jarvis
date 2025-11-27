@@ -63,11 +63,13 @@ struct SidebarButton: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+            .contentShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         }
         .buttonStyle(.plain)
         .background(selection == tab ? Theme.textColor.opacity(0.08) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         .foregroundColor(Theme.textColor)
+        .padding(.horizontal, 8)
     }
 }
 
@@ -104,9 +106,8 @@ struct HomeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Home")
-                .font(.custom("Georgia", size: 28))
-                .fontWeight(.bold)
-                .foregroundColor(.black)
+                .font(Theme.titleFont)
+                .foregroundColor(Theme.textColor)
                 .padding(.top, 24)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
@@ -116,8 +117,8 @@ struct HomeView: View {
                 HStack {
                     Spacer()
                     Text("No messages")
-                        .font(.custom("Georgia", size: 15))
-                        .foregroundColor(.gray)
+                        .font(Theme.bodyFont)
+                        .foregroundColor(Theme.secondaryText)
                         .italic()
                     Spacer()
                 }
@@ -128,7 +129,7 @@ struct HomeView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(groupedMessages.enumerated()), id: \.element.user.id) { _, group in
                                 Divider()
-                                    .overlay(Color(white: 0.75))
+                                    .overlay(Theme.dividerColor)
                                     .padding(.vertical, 16)
                                 MessageGroupRow(
                                     userMessage: group.user,
@@ -149,7 +150,7 @@ struct HomeView: View {
                 }
             }
         }
-        .background(Color.white)
+        .background(Theme.background)
     }
 }
 
@@ -172,7 +173,7 @@ struct MessageGroupRow: View {
                     .frame(width: 16)
 
                 Text(userMessage.content)
-                    .font(.custom("Georgia", size: 15))
+                    .font(Theme.bodyFont)
                     .foregroundColor(Theme.textColor)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -183,11 +184,11 @@ struct MessageGroupRow: View {
                         .frame(width: 40)
 
                     Text("\u{21B3}")
-                        .font(.custom("Georgia", size: 15))
+                        .font(Theme.bodyFont)
                         .foregroundColor(Theme.secondaryText)
                         .frame(width: 16)
 
-                    Image(systemName: Theme.toolIcon(for: tool.toolPayload?.name))
+                    Image(systemName: Theme.iconForTool(name: tool.toolPayload?.name, arguments: tool.toolPayload?.arguments))
                         .font(.system(size: 12))
                         .foregroundColor(Theme.secondaryText)
                         .frame(width: 16)
@@ -212,40 +213,42 @@ struct DictionaryView: View {
     @State private var isCorrection: Bool = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-                entryList
-                addButton
-                if isEditorVisible { entryForm }
-            }
-            .padding(24)
-        }
-        .background(Color.white)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             Text("Dictionary")
-                .font(.custom("Georgia", size: 28))
-                .fontWeight(.bold)
-                .foregroundColor(.black)
+                .font(Theme.titleFont)
+                .foregroundColor(Theme.textColor)
+                .padding(.top, 24)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+
             Text("Add custom words or map abbreviations/misspellings to their corrected form.")
-                .font(.custom("Georgia", size: 14))
-                .foregroundColor(.gray)
+                .font(Theme.bodyFont)
+                .foregroundColor(Theme.secondaryText)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    entryList
+                    addButton
+                    if isEditorVisible { entryForm }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+            }
         }
+        .background(Theme.background)
     }
 
     private var entryList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Entries")
-                .font(.custom("Georgia", size: 16))
-                .fontWeight(.semibold)
-                .foregroundColor(.black)
+                .font(Theme.headingFont)
+                .foregroundColor(Theme.textColor)
             if store.entries.isEmpty {
                 Text("Nothing added yet.")
-                    .font(.custom("Georgia", size: 13))
-                    .foregroundColor(.gray)
+                    .font(Theme.smallFont)
+                    .foregroundColor(Theme.secondaryText)
                     .italic()
             } else {
                 ForEach(store.entries) { entry in
@@ -255,27 +258,27 @@ struct DictionaryView: View {
                         HStack(spacing: 12) {
                             if entry.kind == .correction {
                                 Text(entry.input)
-                                    .font(.custom("Georgia", size: 14))
-                                    .foregroundColor(.black)
+                                    .font(Theme.bodyFont)
+                                    .foregroundColor(Theme.textColor)
                                 Text("→")
-                                    .font(.custom("Georgia", size: 14))
-                                    .foregroundColor(.gray)
+                                    .font(Theme.bodyFont)
+                                    .foregroundColor(Theme.secondaryText)
                                 Text(entry.output ?? "")
-                                    .font(.custom("Georgia", size: 14))
-                                    .foregroundColor(.black)
+                                    .font(Theme.bodyFont)
+                                    .foregroundColor(Theme.textColor)
                             } else {
                                 Text(entry.input)
-                                    .font(.custom("Georgia", size: 14))
-                                    .foregroundColor(.black)
+                                    .font(Theme.bodyFont)
+                                    .foregroundColor(Theme.textColor)
                             }
                             Spacer()
                             Image(systemName: "pencil")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Theme.secondaryText)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
-                        .background(Color(white: 0.97))
-                        .cornerRadius(10)
+                        .background(Theme.inputBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
                     }
                     .buttonStyle(.plain)
                 }
@@ -288,55 +291,50 @@ struct DictionaryView: View {
             openEditor(for: nil)
         } label: {
             Label("Add element", systemImage: "plus.circle.fill")
-                .font(.custom("Georgia", size: 14))
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(ThemeButtonStyle())
     }
 
     private var entryForm: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(editingEntry == nil ? "Add entry" : "Edit entry")
-                    .font(.custom("Georgia", size: 15))
-                    .fontWeight(.semibold)
-                Spacer()
-                Button("Cancel") { isEditorVisible = false }
-                    .buttonStyle(.borderless)
-            }
-
-            Toggle(isOn: $isCorrection) {
-                Text("Make it a correction")
-                    .font(.custom("Georgia", size: 14))
-                    .foregroundColor(.black)
-            }
-            .toggleStyle(.switch)
-
-            if isCorrection {
-                HStack(spacing: 8) {
-                    ThemedTextArea(placeholder: "From (e.g. teh)", text: $inputText, height: 60)
-                    Text("→")
-                        .font(.custom("Georgia", size: 14))
-                        .foregroundColor(.gray)
-                        .frame(width: 24)
-                    ThemedTextArea(placeholder: "To (e.g. the)", text: $outputText, height: 60)
+        ThemedBox {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(editingEntry == nil ? "Add entry" : "Edit entry")
+                        .font(Theme.headingFont)
+                        .foregroundColor(Theme.textColor)
+                    Spacer()
+                    Button("Cancel") { isEditorVisible = false }
+                        .buttonStyle(ThemeButtonStyle())
                 }
-            } else {
-                ThemedTextArea(placeholder: "Word to keep (e.g. Eylul)", text: $inputText, height: 60)
-            }
 
-            HStack {
-                Spacer()
-                Button("Save") {
-                    saveEntry()
+                Toggle(isOn: $isCorrection) {
+                    Text("Make it a correction")
+                        .font(Theme.bodyFont)
+                        .foregroundColor(Theme.textColor)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(saveDisabled)
+                .toggleStyle(.switch)
+
+                if isCorrection {
+                    HStack(spacing: 8) {
+                        ThemedTextArea(placeholder: "From (e.g. teh)", text: $inputText, height: 60)
+                        Text("→")
+                            .font(Theme.bodyFont)
+                            .foregroundColor(Theme.secondaryText)
+                            .frame(width: 24)
+                        ThemedTextArea(placeholder: "To (e.g. the)", text: $outputText, height: 60)
+                    }
+                } else {
+                    ThemedTextArea(placeholder: "Word to keep (e.g. Eylul)", text: $inputText, height: 60)
+                }
+
+                HStack {
+                    Spacer()
+                    Button("Save") { saveEntry() }
+                        .buttonStyle(ThemePrimaryButtonStyle())
+                        .disabled(saveDisabled)
+                }
             }
         }
-        .padding(14)
-        .background(Color(white: 0.98))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
     }
 
     private func openEditor(for entry: DictionaryEntry?) {
@@ -387,16 +385,15 @@ struct StyleView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Writing Style")
-                .font(.custom("Georgia", size: 28))
-                .fontWeight(.bold)
-                .foregroundColor(.black)
+                .font(Theme.titleFont)
+                .foregroundColor(Theme.textColor)
                 .padding(.top, 24)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 8)
 
             Text("Provide examples of your writing style.")
-                .font(.custom("Georgia", size: 14))
-                .foregroundColor(.gray)
+                .font(Theme.bodyFont)
+                .foregroundColor(Theme.secondaryText)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
 
@@ -405,7 +402,7 @@ struct StyleView: View {
                 .padding(.bottom, 24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color.white)
+        .background(Theme.background)
     }
 }
 

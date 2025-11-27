@@ -18,28 +18,26 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             VStack(spacing: 6) {
                 Text("Welcome to Jarvis")
-                    .font(.custom("Georgia", size: 28))
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .font(Theme.titleFont)
+                    .foregroundColor(Theme.textColor)
                 Text("Your AI Secretary for macOS")
-                    .font(.custom("Georgia", size: 15))
-                    .foregroundColor(.gray)
+                    .font(Theme.bodyFont)
+                    .foregroundColor(Theme.secondaryText)
                     .italic()
             }
             .padding(.top, 8)
 
-            Divider().overlay(Color(white: 0.85))
+            Divider().overlay(Theme.borderColor)
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("Shortcut")
-                    .font(.custom("Georgia", size: 16))
-                    .fontWeight(.semibold)
-                    .foregroundColor(.black)
+                    .font(Theme.headingFont)
+                    .foregroundColor(Theme.textColor)
                 ShortcutRecorder()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Divider().overlay(Color(white: 0.85))
+            Divider().overlay(Theme.borderColor)
 
             VStack(alignment: .leading, spacing: 12) {
                 ApiKeysSection(openaiKey: $openaiApiKey,
@@ -49,7 +47,7 @@ struct OnboardingView: View {
                                onApiKeysValidate: { Task { await validateKeys() } })
             }
 
-            Divider().overlay(Color(white: 0.85))
+            Divider().overlay(Theme.borderColor)
 
             VStack(alignment: .leading, spacing: 12) {
                 PermissionsSection(micStatus: $micStatus,
@@ -71,7 +69,7 @@ struct OnboardingView: View {
         }
         .padding(32)
         .frame(width: 520, height: 680)
-        .background(Color.white)
+        .background(Theme.background)
         .onAppear {
             loadAPIKeys(openaiKey: &openaiApiKey, hfKey: &hfApiKey)
             checkPermissions()

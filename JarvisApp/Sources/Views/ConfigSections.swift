@@ -48,7 +48,8 @@ struct ApiKeysSection: View {
                         .foregroundColor(Theme.textColor)
                         .padding(10)
                         .background(Theme.inputBackground)
-                        .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
                         .onChange(of: openaiKey) { _, _ in openaiStatus = .none }
                     StatusIcon(status: openaiStatus)
                 }
@@ -63,7 +64,8 @@ struct ApiKeysSection: View {
                         .foregroundColor(Theme.textColor)
                         .padding(10)
                         .background(Theme.inputBackground)
-                        .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
                         .onChange(of: hfKey) { _, _ in hfStatus = .none }
                     StatusIcon(status: hfStatus)
                 }
@@ -96,7 +98,7 @@ struct PermissionsSection: View {
             }
             .padding(12)
             .background(Theme.inputBackground)
-            .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
 
             HStack {
                 Image(systemName: "keyboard.fill")
@@ -110,7 +112,7 @@ struct PermissionsSection: View {
             }
             .padding(12)
             .background(Theme.inputBackground)
-            .overlay(Rectangle().stroke(Theme.borderColor, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         }
     }
 }

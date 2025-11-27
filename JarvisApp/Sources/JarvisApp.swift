@@ -98,9 +98,12 @@ class AppState: ObservableObject {
     @Published var isSpotlightVisible: Bool = false
     @Published var isRecording: Bool = false
     @Published var isProcessing: Bool = false
+    @Published var isCompleted: Bool = false
     @Published var shortRecordingWarning: Bool = false
     @Published var messages: [ChatMessage] = []
     @Published var selectedTab: SettingsTab = .home
+    @Published var popupTranscript: String?
+    @Published var popupToolMessage: ChatMessage?
 
     let audioRecorder = AudioRecorder()
     let toolManager = ToolManager()
@@ -159,9 +162,11 @@ class AppState: ObservableObject {
         SoundPlayer.playStart()
         shortRecordingWarning = false
         isProcessing = false
+        isCompleted = false
+        popupTranscript = nil
+        popupToolMessage = nil
         isRecording = true
         audioRecorder.startRecording()
-        // We don't clear messages, we append.
     }
     
     func stopRecording() {
@@ -185,58 +190,80 @@ class AppState: ObservableObject {
         }
         
         isProcessing = true
-        
+
         Task {
-            defer { Task { @MainActor in self.isProcessing = false } }
             do {
                 let openaiKey = UserDefaults.standard.string(forKey: "openaiApiKey") ?? ""
-                
+
                 if openaiKey.isEmpty {
-                    pushEphemeral(role: .system, content: "Please set OpenAI API Key in Settings.")
+                    pushMessage(role: .system, content: "Please set OpenAI API Key in Settings.")
                     log("Missing OpenAI API Key")
+                    await completeAndHidePopup()
                     return
                 }
-                
+
                 let whisper = WhisperClient(apiKey: openaiKey)
                 log("Sending audio to OpenAI Whisper...")
-                
+
                 let transcript = try await whisper.transcribe(fileURL: fileURL)
-                
-                // Append as user message (what was said)
-                pushEphemeral(role: .user, content: transcript)
+
+                // Show transcript in popup and save to history
+                popupTranscript = transcript
+                pushMessage(role: .user, content: transcript)
                 log("Whisper transcription: \(transcript)")
-                
+
                 // Decide action using Cerebras
                 let hfKey = UserDefaults.standard.string(forKey: "hfApiKey") ?? ""
                 guard !hfKey.isEmpty else {
-                    pushEphemeral(role: .system, content: "Please set Hugging Face Token in Settings.")
+                    pushMessage(role: .system, content: "Please set Hugging Face Token in Settings.")
                     log("Missing Hugging Face token for Cerebras routing.")
+                    await completeAndHidePopup()
                     return
                 }
-                
+
                 let defaultBrowser = Self.currentDefaultBrowserName()
                 let openAppsDescription = Self.currentOpenAppsDescription()
-                
+
                 let cerebras = CerebrasClient(apiKey: hfKey)
                 if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription) {
                     let toolDescription = formattedToolCall(toolCall)
                     log("Tool call: \(toolCall.tool_name), \(toolCall.tool_arguments)")
-                    pushToolMessage(name: toolDescription.name, args: toolDescription.args)
-                    
-                    // For typing, hide panel to return focus to previous app
+
+                    // Show tool message in popup and save to history
+                    let toolMsg = createToolMessage(name: toolDescription.name, args: toolDescription.args)
+                    popupToolMessage = toolMsg
+                    messages.append(toolMsg)
+
+                    // For typing, hide immediately to return focus
                     if toolCall.tool_name == "type" {
+                        isProcessing = false
                         hideSpotlight()
                     }
                     self.toolManager.execute(toolName: toolCall.tool_name, args: toolCall.tool_arguments)
+
+                    // For non-typing tools, show completion then hide
+                    if toolCall.tool_name != "type" {
+                        await completeAndHidePopup()
+                    }
                 } else {
-                    pushEphemeral(role: .system, content: "Could not understand the command.")
+                    pushMessage(role: .system, content: "Could not understand the command.")
                     log("Cerebras returned no tool call.")
+                    await completeAndHidePopup()
                 }
             } catch {
-                pushEphemeral(role: .system, content: "Error: \(error.localizedDescription)")
+                pushMessage(role: .system, content: "Error: \(error.localizedDescription)")
                 log("Error processing: \(error)")
+                await completeAndHidePopup()
             }
         }
+    }
+
+    @MainActor
+    private func completeAndHidePopup() async {
+        isProcessing = false
+        isCompleted = true
+        try? await Task.sleep(nanoseconds: 700_000_000) // 0.7 seconds
+        hideSpotlight()
     }
     
     func showSettings() {
@@ -246,18 +273,15 @@ class AppState: ObservableObject {
     }
     
     @MainActor
-    private func pushEphemeral(role: MessageRole, content: String) {
+    private func pushMessage(role: MessageRole, content: String) {
         let msg = ChatMessage(role: role, content: content)
         messages.append(msg)
-        ToastManager.shared.show(message: msg)
     }
-    
+
     @MainActor
-    private func pushToolMessage(name: String, args: String) {
+    private func createToolMessage(name: String, args: String) -> ChatMessage {
         let rendered = args.isEmpty ? name : args
-        let msg = ChatMessage(role: .tool, content: rendered, toolPayload: ToolPayload(name: name, arguments: args))
-        messages.append(msg)
-        ToastManager.shared.show(message: msg)
+        return ChatMessage(role: .tool, content: rendered, toolPayload: ToolPayload(name: name, arguments: args))
     }
     
     private static func currentDefaultBrowserName() -> String {

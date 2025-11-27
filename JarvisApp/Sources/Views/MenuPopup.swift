@@ -1,39 +1,105 @@
 import SwiftUI
 import AppKit
 
-private let popupWidth: CGFloat = 240
+private let popupWidth: CGFloat = 340
 
-struct MenuPopupView: View {
-    @EnvironmentObject var appState: AppState
-    
+// MARK: - Popup Message Row (reusable component)
+struct PopupMessageRow: View {
+    let icon: String
+    let content: String
+    var isSecondary: Bool = false
+
     var body: some View {
-        VStack(spacing: 10) {
-            if appState.isProcessing {
-                ProgressView()
-                    .progressViewStyle(.circular)
-                    .scaleEffect(0.9)
-            } else {
-                WaveformView(recorder: appState.audioRecorder, isRecording: appState.isRecording)
-                    .frame(height: 30)
-                    .opacity(appState.isRecording ? 1 : 0.3)
-            }
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(isSecondary ? Theme.secondaryText : .primary)
+                .frame(width: 16)
+
+            Text(content)
+                .font(Theme.smallFont)
+                .foregroundColor(isSecondary ? Theme.secondaryText : .primary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(width: popupWidth, alignment: .leading)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
 }
 
+// MARK: - Main Popup View
+struct MenuPopupView: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Status indicator row
+            HStack(spacing: 12) {
+                statusIndicator
+                    .frame(width: 24, height: 24)
+
+                if appState.isRecording {
+                    WaveformView(recorder: appState.audioRecorder, isRecording: true)
+                        .frame(height: 24)
+                } else if let transcript = appState.popupTranscript {
+                    PopupMessageRow(icon: "waveform", content: transcript)
+                }
+            }
+
+            // Tool output row (if available)
+            if let toolMsg = appState.popupToolMessage {
+                HStack(spacing: 12) {
+                    Text("↳")
+                        .font(Theme.bodyFont)
+                        .foregroundColor(Theme.secondaryText)
+                        .frame(width: 24)
+
+                    PopupMessageRow(
+                        icon: Theme.iconForTool(name: toolMsg.toolPayload?.name, arguments: toolMsg.toolPayload?.arguments),
+                        content: toolMsg.content,
+                        isSecondary: true
+                    )
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(width: popupWidth, alignment: .leading)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+    }
+
+    @ViewBuilder
+    private var statusIndicator: some View {
+        if appState.isCompleted {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundColor(.green)
+                .transition(.scale.combined(with: .opacity))
+        } else if appState.isProcessing {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .scaleEffect(0.8)
+        } else if appState.isRecording {
+            Circle()
+                .fill(Color.red)
+                .frame(width: 12, height: 12)
+                .overlay(Circle().stroke(Color.red.opacity(0.3), lineWidth: 4))
+        } else {
+            Circle()
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 12, height: 12)
+        }
+    }
+}
+
+// MARK: - Panel Manager
 final class MenuPopupManager {
     private var panel: NSPanel?
     private weak var appState: AppState?
-    
+
     func show(appState: AppState) {
         self.appState = appState
-        
+
         let contentView = MenuPopupView().environmentObject(appState)
         let hosting = NSHostingController(rootView: contentView)
         let panel = NSPanel(contentViewController: hosting)
@@ -44,21 +110,21 @@ final class MenuPopupManager {
         panel.hasShadow = true
         panel.hidesOnDeactivate = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
-        
+
         hosting.view.layoutSubtreeIfNeeded()
         let fitHeight = hosting.view.fittingSize.height
-        let panelHeight = max(fitHeight, 60)
+        let panelHeight = max(fitHeight, 50)
         panel.setFrame(NSRect(x: 0, y: 0, width: popupWidth, height: panelHeight), display: false)
         positionPanel(panel)
         panel.orderFrontRegardless()
         self.panel = panel
     }
-    
+
     func hide() {
         panel?.orderOut(nil)
         panel = nil
     }
-    
+
     private func positionPanel(_ panel: NSPanel) {
         if let screen = NSScreen.main {
             let origin = NSPoint(x: screen.visibleFrame.maxX - panel.frame.width - 16,
