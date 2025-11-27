@@ -371,18 +371,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     return
                 }
                 
-                if appState.isSpotlightVisible {
-                    if appState.isRecording {
-                        appState.stopRecording()
-                    }
-                    appState.hideSpotlight()
-                } else {
+                // Always show the panel; recording starts on press, stops on release
+                if !appState.isSpotlightVisible {
                     appState.showSpotlight()
+                }
+                if !appState.isRecording {
                     appState.startRecording()
                 }
             }
             
             return noErr
         }, 1, &eventType, nil, nil)
+        
+        // Hotkey released handler: stop recording but keep panel open
+        var releaseType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased))
+        InstallEventHandler(target, { (nextHandler, theEvent, userData) -> OSStatus in
+            log("Global Hotkey Handler Triggered (Released)!")
+            DispatchQueue.main.async {
+                guard let appState = AppState.shared else {
+                    log("AppState.shared missing in hotkey released handler")
+                    return
+                }
+                if appState.isRecording {
+                    appState.stopRecording()
+                }
+            }
+            return noErr
+        }, 1, &releaseType, nil, nil)
     }
 }
