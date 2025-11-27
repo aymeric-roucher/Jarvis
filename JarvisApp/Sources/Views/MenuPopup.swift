@@ -69,8 +69,7 @@ struct MenuPopupView: View {
         .frame(width: popupWidth, alignment: .leading)
         .background(Theme.background)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
-        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Color.black, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -102,18 +101,30 @@ final class MenuPopupManager {
     private weak var appState: AppState?
 
     func show(appState: AppState) {
+        // Hide any existing panel first to prevent orphans
+        hide()
+
         self.appState = appState
 
         let contentView = MenuPopupView().environmentObject(appState)
         let hosting = NSHostingController(rootView: contentView)
+
         let panel = NSPanel(contentViewController: hosting)
-        panel.styleMask = [.nonactivatingPanel, .borderless, .fullSizeContentView, .hudWindow]
+        panel.styleMask = [.nonactivatingPanel, .borderless, .fullSizeContentView]
         panel.level = .statusBar
-        panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = true
+        panel.backgroundColor = NSColor.clear
+        panel.hasShadow = false  // Use SwiftUI shadow instead for rounded corners
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
+
+        // Make the hosting view and content view fully transparent
+        if let contentView = panel.contentView {
+            contentView.wantsLayer = true
+            contentView.layer?.backgroundColor = NSColor.clear.cgColor
+        }
+        hosting.view.wantsLayer = true
+        hosting.view.layer?.backgroundColor = NSColor.clear.cgColor
 
         hosting.view.layoutSubtreeIfNeeded()
         let fitHeight = hosting.view.fittingSize.height
