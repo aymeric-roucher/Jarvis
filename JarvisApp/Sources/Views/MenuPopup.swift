@@ -13,12 +13,12 @@ struct PopupMessageRow: View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(isSecondary ? Theme.secondaryText : .primary)
+                .foregroundColor(isSecondary ? Theme.secondaryText : Theme.textColor)
                 .frame(width: 16)
 
             Text(content)
                 .font(Theme.smallFont)
-                .foregroundColor(isSecondary ? Theme.secondaryText : .primary)
+                .foregroundColor(isSecondary ? Theme.secondaryText : Theme.textColor)
                 .lineLimit(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -39,6 +39,10 @@ struct MenuPopupView: View {
                 if appState.isRecording {
                     WaveformView(recorder: appState.audioRecorder, isRecording: true)
                         .frame(height: 24)
+                } else if appState.isProcessing && appState.popupTranscript == nil {
+                    Text("Processing...")
+                        .font(Theme.smallFont)
+                        .foregroundColor(Theme.secondaryText)
                 } else if let transcript = appState.popupTranscript {
                     PopupMessageRow(icon: "waveform", content: transcript)
                 }
@@ -63,9 +67,10 @@ struct MenuPopupView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .frame(width: popupWidth, alignment: .leading)
-        .background(.ultraThinMaterial)
+        .background(Theme.background)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 
     @ViewBuilder
@@ -78,16 +83,15 @@ struct MenuPopupView: View {
         } else if appState.isProcessing {
             ProgressView()
                 .progressViewStyle(.circular)
-                .scaleEffect(0.8)
-        } else if appState.isRecording {
-            Circle()
-                .fill(Color.red)
-                .frame(width: 12, height: 12)
-                .overlay(Circle().stroke(Color.red.opacity(0.3), lineWidth: 4))
+                .scaleEffect(0.7)
+                .colorInvert()
+                .colorMultiply(Theme.textColor)
         } else {
+            // Recording state (default when popup is open)
             Circle()
-                .fill(Color.secondary.opacity(0.3))
+                .fill(Theme.textColor)
                 .frame(width: 12, height: 12)
+                .overlay(Circle().stroke(Theme.textColor.opacity(0.3), lineWidth: 4))
         }
     }
 }

@@ -174,13 +174,14 @@ class AppState: ObservableObject {
         log("Stopped recording")
         SoundPlayer.playStop()
         isRecording = false
-        
+        isProcessing = true
+
         guard let fileURL = audioRecorder.stopRecording() else {
             log("Error: No file URL returned from recorder")
             isProcessing = false
-            return 
+            return
         }
-        
+
         if audioRecorder.lastRecordingDuration < minimumRecordingDuration {
             log("Recording too short: \(audioRecorder.lastRecordingDuration)s (threshold \(minimumRecordingDuration)s)")
             withAnimation {
@@ -189,8 +190,6 @@ class AppState: ObservableObject {
             isProcessing = false
             return
         }
-        
-        isProcessing = true
 
         Task {
             do {

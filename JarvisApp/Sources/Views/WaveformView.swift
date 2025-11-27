@@ -37,9 +37,7 @@ struct WaveformView: View {
         let activeHeight = max(5, effectiveLevel * maxHeight * 0.9)
         let height = isRecording ? activeHeight : CGFloat(idleHeight)
         
-        let activeColor = Color.red.opacity(0.7 + effectiveLevel * 0.3)
-        let idleColor = Color.secondary.opacity(0.3)
-        let color = isRecording ? activeColor : idleColor
+        let color = Theme.textColor.opacity(0.6 + effectiveLevel * 0.4)
         
         return RoundedRectangle(cornerRadius: width / 2)
             .fill(color)

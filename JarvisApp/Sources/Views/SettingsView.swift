@@ -60,14 +60,14 @@ struct SidebarButton: View {
                 Text(title).font(Theme.bodyFont)
                 Spacer()
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
             .frame(maxWidth: .infinity)
+            .background(selection == tab ? Theme.textColor.opacity(0.08) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
             .contentShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         }
-        .buttonStyle(ThemeButtonStyle())
-        .background(selection == tab ? Theme.textColor.opacity(0.08) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+        .buttonStyle(.plain)
         .foregroundColor(Theme.textColor)
         .padding(.horizontal, 8)
     }
