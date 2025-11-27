@@ -129,7 +129,7 @@ struct DictionaryView: View {
             Text("Dictionary")
                 .font(.title2)
                 .padding()
-            Text("Define custom abbreviations here.")
+            Text("Define custom words and abbreviations or common misspellings here.")
                 .foregroundColor(.secondary)
             List {
                 Text("Coming soon...")

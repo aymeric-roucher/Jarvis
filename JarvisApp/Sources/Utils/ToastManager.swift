@@ -15,7 +15,9 @@ class ToastManager {
             
             if self.window == nil {
                 let screenFrame = NSScreen.main?.visibleFrame ?? .zero
-                let origin = NSPoint(x: screenFrame.maxX - 380, y: screenFrame.maxY - 120)
+                // Position just above the mic/waveform popup near bottom-right.
+                let origin = NSPoint(x: screenFrame.maxX - hosting.frame.width - 24,
+                                     y: screenFrame.minY + 90)
                 let win = NSWindow(
                     contentRect: NSRect(origin: origin, size: hosting.frame.size),
                     styleMask: [.borderless],
@@ -31,6 +33,12 @@ class ToastManager {
             }
             
             self.window?.contentView = hosting
+            if let screenFrame = NSScreen.main?.visibleFrame {
+                // Update position on each show to stay anchored near popup
+                let newOrigin = NSPoint(x: screenFrame.maxX - hosting.frame.width - 24,
+                                        y: screenFrame.minY + 90)
+                self.window?.setFrameOrigin(newOrigin)
+            }
             self.window?.orderFrontRegardless()
             
             self.timer = Timer.scheduledTimer(withTimeInterval: 1.8, repeats: false) { _ in

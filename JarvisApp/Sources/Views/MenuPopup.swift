@@ -6,19 +6,14 @@ struct MenuPopupView: View {
     
     var body: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(appState.isRecording ? .red : .secondary)
-                WaveformView(recorder: appState.audioRecorder, isRecording: appState.isRecording)
-                    .frame(height: 30)
-                    .opacity(appState.isRecording ? 1 : 0.3)
-            }
-            
             if appState.isProcessing {
                 ProgressView()
                     .progressViewStyle(.circular)
                     .scaleEffect(0.9)
+            } else {
+                WaveformView(recorder: appState.audioRecorder, isRecording: appState.isRecording)
+                    .frame(height: 30)
+                    .opacity(appState.isRecording ? 1 : 0.3)
             }
         }
         .padding(.horizontal, 12)
@@ -32,8 +27,6 @@ struct MenuPopupView: View {
 final class MenuPopupManager {
     private var panel: NSPanel?
     private weak var appState: AppState?
-    private let panelWidth: CGFloat = 200
-    private let panelHeight: CGFloat = 80
     
     func show(appState: AppState) {
         self.appState = appState
@@ -41,14 +34,21 @@ final class MenuPopupManager {
         let contentView = MenuPopupView().environmentObject(appState)
         let hosting = NSHostingController(rootView: contentView)
         let panel = NSPanel(contentViewController: hosting)
-        panel.styleMask = [.nonactivatingPanel, .hudWindow, .fullSizeContentView]
+        panel.styleMask = [.nonactivatingPanel, .borderless, .fullSizeContentView, .hudWindow]
         panel.level = .statusBar
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
         panel.hidesOnDeactivate = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
-        panel.setFrame(NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight), display: false)
+        
+        hosting.view.layoutSubtreeIfNeeded()
+        // Compute desired width with waveform visible, then fix it.
+        let waveformWidth = hosting.view.fittingSize.width
+        let fixedWidth = max(waveformWidth, 220)
+        let fitHeight = hosting.view.fittingSize.height
+        let panelHeight = max(fitHeight, 60)
+        panel.setFrame(NSRect(x: 0, y: 0, width: fixedWidth, height: panelHeight), display: false)
         positionPanel(panel)
         panel.orderFrontRegardless()
         self.panel = panel
@@ -61,8 +61,8 @@ final class MenuPopupManager {
     
     private func positionPanel(_ panel: NSPanel) {
         if let screen = NSScreen.main {
-            let origin = NSPoint(x: screen.visibleFrame.maxX - panelWidth - 12,
-                                 y: screen.visibleFrame.minY + 20)
+            let origin = NSPoint(x: screen.visibleFrame.maxX - panel.frame.width - 16,
+                                 y: screen.visibleFrame.minY + 40)
             panel.setFrameOrigin(origin)
         }
     }
