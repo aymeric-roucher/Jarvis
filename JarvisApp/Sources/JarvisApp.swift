@@ -322,7 +322,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
         log("Application finished launching")
+        CrashLogger.install()
         registerHotKey()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillTerminate), name: NSApplication.willTerminateNotification, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(reloadHotkey), name: NSNotification.Name("ReloadHotkey"), object: nil)
         
@@ -336,6 +339,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+    }
+    
+    @objc private func handleAppWillTerminate() {
+        log("NSApplication.willTerminateNotification received")
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        log("applicationWillTerminate called")
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
     }
     
     @objc func reloadHotkey() {
@@ -364,17 +379,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let savedMod = UserDefaults.standard.integer(forKey: "JarvisShortcutModifier")
         let savedKey = UserDefaults.standard.integer(forKey: "JarvisShortcutKey")
         
-        // Default: Backtick key (keyCode 50), no modifiers
-        lastModifiers = UInt32(savedMod)
-        lastKeyCode = savedKey == 0 ? 50 : UInt32(savedKey)
+        // Default: Shift + Space (modifier shiftKey + keyCode 49)
+        let effectiveModifiers = savedMod == 0 ? Int(shiftKey) : savedMod
+        let effectiveKey = savedKey == 0 ? 49 : savedKey
+        if savedMod == 0 { UserDefaults.standard.set(effectiveModifiers, forKey: "JarvisShortcutModifier") }
+        if savedKey == 0 { UserDefaults.standard.set(effectiveKey, forKey: "JarvisShortcutKey") }
+        lastModifiers = UInt32(effectiveModifiers)
+        lastKeyCode = UInt32(effectiveKey)
         
         // Register the HotKey. This will fire on keydown.
         let target = GetEventDispatcherTarget()
-        let effectiveModifiers = lastModifiers == 0 ? UInt32(shiftKey) : lastModifiers
-        let effectiveKey = lastKeyCode == 0 ? UInt32(49) : lastKeyCode // Space key default
-        lastModifiers = effectiveModifiers
-        lastKeyCode = effectiveKey
-        let err = RegisterEventHotKey(effectiveKey, effectiveModifiers, hotKeyID, target, 0, &newHotKeyRef)
+        let err = RegisterEventHotKey(lastKeyCode, lastModifiers, hotKeyID, target, 0, &newHotKeyRef)
         
         if err == noErr {
             hotKeyRef = newHotKeyRef

@@ -131,6 +131,7 @@ struct OnboardingView: View {
                     Button("Back") { withAnimation { page -= 1 } }
                     Spacer()
                     Button("Finish") {
+                        NotificationCenter.default.post(name: NSNotification.Name("ReloadHotkey"), object: nil)
                         isCompleted = true
                     }
                     .buttonStyle(.borderedProminent)

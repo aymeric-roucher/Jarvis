@@ -7,7 +7,7 @@ struct SpotlightView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Status Area (no typing input; typing happens in active app)
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 Image(systemName: "mic.fill")
                     .font(.system(size: 24))
                     .foregroundColor(appState.isRecording ? .red : .secondary)
@@ -18,15 +18,12 @@ struct SpotlightView: View {
                         }
                     }
                 
-                Spacer()
+                WaveformView(recorder: appState.audioRecorder, isRecording: appState.isRecording)
+                    .frame(height: 60)
+                    .opacity(appState.isRecording ? 1.0 : 0.3)
             }
-            .padding(.horizontal, 24)
-            
-            // Waveform (Always Visible - Idle or Active)
-            WaveformView(recorder: appState.audioRecorder, isRecording: appState.isRecording)
-                .frame(height: 60)
-                .padding(.bottom, 10)
-                .opacity(appState.isRecording ? 1.0 : 0.3)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
             
             if appState.isProcessing {
                 ProcessingIndicator()
@@ -37,21 +34,25 @@ struct SpotlightView: View {
             Divider()
                 .background(Color.white.opacity(0.1))
             
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(appState.messages) { msg in
-                            MessageBubble(message: msg)
-                                .id(msg.id)
+            if appState.messages.isEmpty {
+                Spacer(minLength: 12)
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(appState.messages) { msg in
+                                MessageBubble(message: msg)
+                                    .id(msg.id)
+                            }
                         }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(maxHeight: 320)
-                .onChange(of: appState.messages.count) { _, _ in
-                    if let last = appState.messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                    .frame(maxHeight: 320)
+                    .onChange(of: appState.messages.count) { _, _ in
+                        if let last = appState.messages.last {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        }
                     }
                 }
             }
@@ -59,9 +60,12 @@ struct SpotlightView: View {
             Text("Press Esc or click outside to close")
                 .font(.footnote)
                 .foregroundColor(.secondary)
-                .padding(.bottom, 8)
+                .padding(.bottom, 4)
         }
         .frame(width: 700)
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, appState.messages.isEmpty ? 8 : 4)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)

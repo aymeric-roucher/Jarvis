@@ -11,11 +11,11 @@ class ToastManager {
         DispatchQueue.main.async {
             self.timer?.invalidate()
             let hosting = NSHostingView(rootView: ToastView(message: message))
-            hosting.frame = NSRect(x: 0, y: 0, width: 260, height: 60)
+            hosting.frame = NSRect(x: 0, y: 0, width: 360, height: 80)
             
             if self.window == nil {
                 let screenFrame = NSScreen.main?.visibleFrame ?? .zero
-                let origin = NSPoint(x: screenFrame.maxX - 280, y: screenFrame.maxY - 80)
+                let origin = NSPoint(x: screenFrame.maxX - 380, y: screenFrame.maxY - 100)
                 let win = NSWindow(
                     contentRect: NSRect(origin: origin, size: hosting.frame.size),
                     styleMask: [.borderless],
@@ -48,12 +48,12 @@ private struct ToastView: View {
         HStack(spacing: 8) {
             icon(for: message)
             Text(message.content)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.primary)
-                .lineLimit(2)
+                .lineLimit(3)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 6)

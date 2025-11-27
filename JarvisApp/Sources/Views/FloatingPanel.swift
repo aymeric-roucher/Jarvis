@@ -45,6 +45,9 @@ final class FloatingPanel<Content: View>: NSPanel {
 final class FloatingPanelHandler {
     private var panel: FloatingPanel<AnyView>?
     private var onClose: (() -> Void)?
+    private weak var appState: AppState?
+    private var escMonitor: Any?
+    private var clickMonitor: Any?
     
     func configureOnClose(_ onClose: @escaping () -> Void) {
         self.onClose = onClose
@@ -60,6 +63,7 @@ final class FloatingPanelHandler {
     
     func show(appState: AppState) {
         if panel != nil { return }
+        self.appState = appState
         let panel = FloatingPanel(view: {
             AnyView(SpotlightView().environmentObject(appState))
         }, contentRect: NSRect(x: 0, y: 0, width: 740, height: 260), didClose: { [weak self] in
@@ -70,10 +74,9 @@ final class FloatingPanelHandler {
         })
         
         DispatchQueue.main.async {
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
             panel.center()
+            self.installMonitors()
         }
         
         self.panel = panel
@@ -85,6 +88,39 @@ final class FloatingPanelHandler {
             panel.orderOut(nil)
             self.panel = nil
             Task { @MainActor in self.onClose?() }
+        }
+        removeMonitors()
+    }
+    
+    private func installMonitors() {
+        removeMonitors()
+        escMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if event.keyCode == 53 { // Esc
+                self?.hide()
+            }
+        }
+        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let panel = self?.panel else { return }
+            let locInScreen: NSPoint
+            if let win = event.window {
+                locInScreen = win.convertPoint(toScreen: event.locationInWindow)
+            } else {
+                locInScreen = event.locationInWindow
+            }
+            if !panel.frame.contains(locInScreen) {
+                self?.hide()
+            }
+        }
+    }
+    
+    private func removeMonitors() {
+        if let escMonitor = escMonitor {
+            NSEvent.removeMonitor(escMonitor)
+            self.escMonitor = nil
+        }
+        if let clickMonitor = clickMonitor {
+            NSEvent.removeMonitor(clickMonitor)
+            self.clickMonitor = nil
         }
     }
 }
