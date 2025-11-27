@@ -1,6 +1,8 @@
 import SwiftUI
 import AppKit
 
+private let popupWidth: CGFloat = 240
+
 struct MenuPopupView: View {
     @EnvironmentObject var appState: AppState
     
@@ -18,6 +20,7 @@ struct MenuPopupView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+        .frame(width: popupWidth, alignment: .leading)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
@@ -43,12 +46,9 @@ final class MenuPopupManager {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         
         hosting.view.layoutSubtreeIfNeeded()
-        // Compute desired width with waveform visible, then fix it.
-        let waveformWidth = hosting.view.fittingSize.width
-        let fixedWidth = max(waveformWidth, 220)
         let fitHeight = hosting.view.fittingSize.height
         let panelHeight = max(fitHeight, 60)
-        panel.setFrame(NSRect(x: 0, y: 0, width: fixedWidth, height: panelHeight), display: false)
+        panel.setFrame(NSRect(x: 0, y: 0, width: popupWidth, height: panelHeight), display: false)
         positionPanel(panel)
         panel.orderFrontRegardless()
         self.panel = panel
