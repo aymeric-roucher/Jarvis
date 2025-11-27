@@ -382,6 +382,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             // Dispatch to Main Actor to access AppState safely
             DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("GlobalHotkeyPressed"), object: nil)
                 guard UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else {
                     log("Hotkey ignored because onboarding is not completed.")
                     return
