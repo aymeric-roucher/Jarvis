@@ -260,8 +260,7 @@ class AppState: ObservableObject {
                 
                 let cerebras = CerebrasClient(apiKey: hfKey)
                 if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription) {
-                    let reasoning = toolCall.thought ?? "Executing \(toolCall.tool_name)..."
-                    log("Cerebras output: \(reasoning)")
+                    let reasoning = "Executing \(toolCall.tool_name)..."
                     log("Tool call: \(toolCall.tool_name), \(toolCall.tool_arguments)")
                     pushEphemeral(role: .assistant, content: reasoning)
                     

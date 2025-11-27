@@ -11,9 +11,11 @@ struct CerebrasClient {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let systemPrompt = """
-        You are a system assistant for macOS. The user has provided vocal guidance.
-        By default, what they want is to type what they've said. But they can also ask you to perform commands.
-        Output ONLY valid JSON with keys: "thought", "tool_name", "tool_arguments".
+        You are a scribe for macOS. The user has provided vocal guidance. You have to do one of two things:
+        1. By default, what they want is to type what they've said.
+        2. But if their text says to perform a command like "open app" or "switch to app" or "deep research", execute it instead.
+        In NO case should you answer to what they say or ask clarification. You either transcribe or execute.
+        Output ONLY valid JSON with keys: "tool_name", "tool_arguments".
         Tools available:
         - type(text: String): Type text into active window.
         - open_app(name_or_url: String): Open app or URL. Default browser is "\(defaultBrowser)".
@@ -54,7 +56,6 @@ struct CerebrasClient {
 }
 
 struct ToolCallResponse: Codable {
-    let thought: String?
     let tool_name: String
     let tool_arguments: ToolArguments
 }
