@@ -2,11 +2,13 @@ import Foundation
 import AVFoundation
 
 class AudioRecorder: NSObject, ObservableObject {
+    static let waveformBarCount = 30
+
     var audioRecorder: AVAudioRecorder?
     @Published var isRecording = false
     @Published var audioLevels: [Float] = []
     private(set) var lastRecordingDuration: TimeInterval = 0
-    
+
     private var timer: Timer?
     
     func startRecording() {
@@ -117,7 +119,7 @@ class AudioRecorder: NSObject, ObservableObject {
             }
             
             DispatchQueue.main.async {
-                if self.audioLevels.count > 40 { self.audioLevels.removeFirst() }
+                if self.audioLevels.count > Self.waveformBarCount { self.audioLevels.removeFirst() }
                 self.audioLevels.append(level)
             }
         }

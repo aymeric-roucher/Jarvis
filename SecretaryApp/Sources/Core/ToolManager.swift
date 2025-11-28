@@ -42,20 +42,33 @@ struct ToolManager {
     }
     
     private func typeString(_ string: String) {
-        // Using CGEvent to simulate keystrokes
+        let pasteboard = NSPasteboard.general
+
+        // Save current clipboard content
+        let previousContents = pasteboard.string(forType: .string)
+
+        // Set the text to paste
+        pasteboard.clearContents()
+        pasteboard.setString(string, forType: .string)
+
+        // Simulate Cmd+V to paste
         let source = CGEventSource(stateID: .hidSystemState)
-        
-        for char in string {
-            if let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true) {
-                // We need to map char to keycode or use unicodeString
-                var uniChar = Array(String(char).utf16)
-                event.keyboardSetUnicodeString(stringLength: uniChar.count, unicodeString: &uniChar)
-                event.post(tap: .cghidEventTap)
-                
-                if let upEvent = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false) {
-                    upEvent.keyboardSetUnicodeString(stringLength: uniChar.count, unicodeString: &uniChar)
-                    upEvent.post(tap: .cghidEventTap)
-                }
+        let vKeyCode: CGKeyCode = 9 // 'v' key
+
+        if let keyDown = CGEvent(keyboardEventSource: source, virtualKey: vKeyCode, keyDown: true) {
+            keyDown.flags = .maskCommand
+            keyDown.post(tap: .cghidEventTap)
+        }
+        if let keyUp = CGEvent(keyboardEventSource: source, virtualKey: vKeyCode, keyDown: false) {
+            keyUp.flags = .maskCommand
+            keyUp.post(tap: .cghidEventTap)
+        }
+
+        // Restore previous clipboard content after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let previous = previousContents {
+                pasteboard.clearContents()
+                pasteboard.setString(previous, forType: .string)
             }
         }
     }

@@ -200,15 +200,16 @@ struct ThemedTextArea: View {
                     .font(font)
                     .foregroundColor(Theme.secondaryText)
                     .padding(.horizontal, 13)
-                    .padding(.vertical, 13)
+                    .padding(.vertical, 10)
                     .allowsHitTesting(false)
             }
             TextEditor(text: $text)
                 .font(font)
                 .foregroundColor(Theme.textColor)
                 .padding(.horizontal, 8)
-                .padding(.vertical, 5)
+                .padding(.vertical, 8)
                 .scrollContentBackground(.hidden)
+                .tint(Theme.textColor)
         }
         .background(Theme.inputBackground)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))

@@ -31,6 +31,8 @@ struct ApiKeysSection: View {
     @Binding var hfStatus: ValidationStatus
     var onApiKeysValidate: () -> Void
 
+    private let labelWidth: CGFloat = 100
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -39,36 +41,38 @@ struct ApiKeysSection: View {
                 Button("Check APIs") { onApiKeysValidate() }.buttonStyle(ThemeButtonStyle())
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("OpenAI API Key").font(Theme.smallFont).foregroundColor(Theme.secondaryText)
-                HStack {
-                    SecureField("sk-...", text: $openaiKey)
-                        .textFieldStyle(.plain)
-                        .font(Theme.bodyFont)
-                        .foregroundColor(Theme.textColor)
-                        .padding(10)
-                        .background(Theme.inputBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
-                        .onChange(of: openaiKey) { _, _ in openaiStatus = .none }
-                    StatusIcon(status: openaiStatus)
-                }
+            HStack(spacing: 12) {
+                Text("OpenAI")
+                    .font(Theme.smallFont)
+                    .foregroundColor(Theme.secondaryText)
+                    .frame(width: labelWidth, alignment: .leading)
+                SecureField("sk-...", text: $openaiKey)
+                    .textFieldStyle(.plain)
+                    .font(Theme.bodyFont)
+                    .foregroundColor(Theme.textColor)
+                    .padding(10)
+                    .background(Theme.inputBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+                    .onChange(of: openaiKey) { _, _ in openaiStatus = .none }
+                StatusIcon(status: openaiStatus)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Hugging Face Token").font(Theme.smallFont).foregroundColor(Theme.secondaryText)
-                HStack {
-                    SecureField("hf_...", text: $hfKey)
-                        .textFieldStyle(.plain)
-                        .font(Theme.bodyFont)
-                        .foregroundColor(Theme.textColor)
-                        .padding(10)
-                        .background(Theme.inputBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                        .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
-                        .onChange(of: hfKey) { _, _ in hfStatus = .none }
-                    StatusIcon(status: hfStatus)
-                }
+            HStack(spacing: 12) {
+                Text("Hugging Face")
+                    .font(Theme.smallFont)
+                    .foregroundColor(Theme.secondaryText)
+                    .frame(width: labelWidth, alignment: .leading)
+                SecureField("hf_...", text: $hfKey)
+                    .textFieldStyle(.plain)
+                    .font(Theme.bodyFont)
+                    .foregroundColor(Theme.textColor)
+                    .padding(10)
+                    .background(Theme.inputBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+                    .onChange(of: hfKey) { _, _ in hfStatus = .none }
+                StatusIcon(status: hfStatus)
             }
         }
     }
@@ -141,61 +145,62 @@ struct LanguageSelectionSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Languages").font(Theme.headingFont).foregroundColor(Theme.textColor)
-            Text("Select languages you speak. Whisper will auto-detect between them.")
-                .font(Theme.smallFont)
-                .foregroundColor(Theme.secondaryText)
 
-            // Selected languages as chips
-            if !store.selectedLanguages.isEmpty {
-                FlowLayout(spacing: 8) {
-                    ForEach(store.selectedLanguages) { language in
-                        LanguageChip(language: language) {
-                            store.remove(language)
-                        }
-                    }
-                }
-            }
-
-            // Search field with suggestions
-            VStack(alignment: .leading, spacing: 0) {
-                TextField("Type to add a language...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(Theme.bodyFont)
-                    .foregroundColor(Theme.textColor)
-                    .padding(10)
-                    .background(Theme.inputBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                    .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
-                    .focused($isSearchFocused)
-
-                // Suggestions dropdown
-                if !searchText.isEmpty && !filteredLanguages.isEmpty {
+            GeometryReader { geometry in
+                HStack(alignment: .top, spacing: 16) {
+                    // Left side: search field with suggestions (1/3 width)
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(filteredLanguages.prefix(6), id: \.code) { language in
-                            Button {
-                                store.add(language)
-                                searchText = ""
-                            } label: {
-                                Text(language.name)
-                                    .font(Theme.bodyFont)
-                                    .foregroundColor(Theme.textColor)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
+                        TextField("Type to add...", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .font(Theme.bodyFont)
+                            .foregroundColor(Theme.textColor)
+                            .padding(10)
+                            .background(Theme.inputBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+                            .focused($isSearchFocused)
+
+                        // Suggestions dropdown
+                        if !searchText.isEmpty && !filteredLanguages.isEmpty {
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(filteredLanguages.prefix(6), id: \.code) { language in
+                                    Button {
+                                        store.add(language)
+                                        searchText = ""
+                                    } label: {
+                                        Text(language.name)
+                                            .font(Theme.bodyFont)
+                                            .foregroundColor(Theme.textColor)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 8)
+                                            .background(Color.clear)
+                                    }
+                                    .buttonStyle(.plain)
                                     .background(Color.clear)
+                                    .contentShape(Rectangle())
+                                }
                             }
-                            .buttonStyle(.plain)
-                            .background(Color.clear)
-                            .contentShape(Rectangle())
-                            .onHover { hovering in }
+                            .background(Theme.inputBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+                            .padding(.top, 4)
                         }
                     }
-                    .background(Theme.inputBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                    .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
-                    .padding(.top, 4)
+                    .frame(width: (geometry.size.width - 16) / 3)
+
+                    // Right side: selected languages as chips (2/3 width)
+                    FlowLayout(spacing: 8) {
+                        ForEach(store.selectedLanguages) { language in
+                            LanguageChip(language: language) {
+                                store.remove(language)
+                            }
+                        }
+                    }
+                    .frame(width: (geometry.size.width - 16) * 2 / 3, alignment: .leading)
                 }
             }
+            .frame(height: 40)
         }
     }
 

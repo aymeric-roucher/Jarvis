@@ -103,6 +103,23 @@ struct HomeView: View {
         return f
     }()
 
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d MMM"
+        return f
+    }()
+
+    private static func dayString(for date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            return dateFormatter.string(from: date)
+        }
+    }
+
     private var totalWordCount: Int {
         appState.messages
             .filter { $0.role == .user }
@@ -152,7 +169,8 @@ struct HomeView: View {
                                 MessageGroupRow(
                                     userMessage: group.user,
                                     toolMessage: group.tool,
-                                    timeFormatter: Self.timeFormatter
+                                    dayString: Self.dayString(for: group.user.timestamp),
+                                    timeString: Self.timeFormatter.string(from: group.user.timestamp)
                                 )
                                 .id(group.user.id)
                             }
@@ -175,15 +193,24 @@ struct HomeView: View {
 struct MessageGroupRow: View {
     let userMessage: ChatMessage
     let toolMessage: ChatMessage?
-    let timeFormatter: DateFormatter
+    let dayString: String
+    let timeString: String
+
+    private let dateColumnWidth: CGFloat = 52
+    private let timeColumnWidth: CGFloat = 40
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
-                Text(timeFormatter.string(from: userMessage.timestamp))
+                Text(dayString)
                     .font(Theme.smallFont)
                     .foregroundColor(Theme.secondaryText)
-                    .frame(width: 40, alignment: .leading)
+                    .frame(width: dateColumnWidth, alignment: .leading)
+
+                Text(timeString)
+                    .font(Theme.smallFont)
+                    .foregroundColor(Theme.secondaryText)
+                    .frame(width: timeColumnWidth, alignment: .leading)
 
                 Image(systemName: "waveform")
                     .font(.system(size: 12))
@@ -199,7 +226,10 @@ struct MessageGroupRow: View {
             if let tool = toolMessage {
                 HStack(alignment: .top, spacing: 8) {
                     Text("")
-                        .frame(width: 40)
+                        .frame(width: dateColumnWidth)
+
+                    Text("")
+                        .frame(width: timeColumnWidth)
 
                     Text("\u{21B3}")
                         .font(Theme.bodyFont)
