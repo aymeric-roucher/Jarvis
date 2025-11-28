@@ -3,16 +3,16 @@ import AppKit
 import Carbon
 
 @main
-struct JarvisApp: App {
+struct SecretaryApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject var appState = AppState()
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
-    @AppStorage("JarvisShortcutModifier") var savedModifier: Int = ShortcutConfig.defaultModifier
-    @AppStorage("JarvisShortcutKey") var savedKey: Int = ShortcutConfig.defaultKey
+    @AppStorage("SecretaryShortcutModifier") var savedModifier: Int = ShortcutConfig.defaultModifier
+    @AppStorage("SecretaryShortcutKey") var savedKey: Int = ShortcutConfig.defaultKey
 
     var body: some Scene {
         // Menu Bar Icon
-        MenuBarExtra("Jarvis", systemImage: "waveform.circle") {
+        MenuBarExtra("Secretary", systemImage: "waveform.circle") {
             Button("Open App") {
                 appState.selectedTab = .home
                 appState.showSettings()
@@ -27,7 +27,7 @@ struct JarvisApp: App {
             Divider()
             
             Menu("Shortcuts") {
-                Button("Toggle Jarvis (\(ShortcutConfig.display(modifier: savedModifier, key: savedKey)))") {
+                Button("Toggle Secretary (\(ShortcutConfig.display(modifier: savedModifier, key: savedKey)))") {
                     appState.toggleSpotlight()
                 }
             }
@@ -45,13 +45,13 @@ struct JarvisApp: App {
             
             Divider()
             
-            Button("Quit Jarvis") {
+            Button("Quit Secretary") {
                 NSApplication.shared.terminate(nil)
             }
         }
-        
+
         // Settings / Dashboard Window
-        Window("Jarvis Dashboard", id: "settings") {
+        Window("Secretary Dashboard", id: "settings") {
             if hasCompletedOnboarding {
                 SettingsView()
                     .environmentObject(appState)
@@ -112,11 +112,11 @@ class AppState: ObservableObject {
     init() {
         AppState.shared = self
         // Listen for the toggle notification here, in the persistent state object
-        NotificationCenter.default.addObserver(self, selector: #selector(handleToggleNotification), name: NSNotification.Name("ToggleJarvis"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleToggleNotification), name: NSNotification.Name("ToggleSecretary"), object: nil)
     }
-    
+
     @objc func handleToggleNotification() {
-        log("AppState received ToggleJarvis")
+        log("AppState received ToggleSecretary")
         toggleSpotlight()
     }
     
@@ -202,7 +202,7 @@ class AppState: ObservableObject {
                     return
                 }
 
-                let whisper = WhisperClient(apiKey: openaiKey)
+                let whisper = TranscriptionClient(apiKey: openaiKey)
                 log("Sending audio to OpenAI Whisper...")
 
                 let transcript = try await whisper.transcribe(fileURL: fileURL)
@@ -223,9 +223,12 @@ class AppState: ObservableObject {
 
                 let defaultBrowser = Self.currentDefaultBrowserName()
                 let openAppsDescription = Self.currentOpenAppsDescription()
+                let installedAppsDescription = Self.installedAppsDescription()
+                let dictionaryEntries = DictionaryStore().entries
+                let styleExamples = StyleStore().styleText
 
-                let cerebras = CerebrasClient(apiKey: hfKey)
-                if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription) {
+                let cerebras = ThinkingClient(apiKey: hfKey)
+                if let toolCall = try await cerebras.processCommand(input: transcript, defaultBrowser: defaultBrowser, openAppsDescription: openAppsDescription, installedAppsDescription: installedAppsDescription, dictionaryEntries: dictionaryEntries, styleExamples: styleExamples) {
                     let toolDescription = formattedToolCall(toolCall)
                     log("Tool call: \(toolCall.tool_name), \(toolCall.tool_arguments)")
 
@@ -261,7 +264,7 @@ class AppState: ObservableObject {
     }
     
     func showSettings() {
-        if let url = URL(string: "jarvis://settings") {
+        if let url = URL(string: "secretary://settings") {
             NSWorkspace.shared.open(url)
         }
     }
@@ -292,6 +295,18 @@ class AppState: ObservableObject {
             .compactMap { $0.localizedName }
             .sorted()
         return names.isEmpty ? "None detected" : names.joined(separator: ", ")
+    }
+
+    private static func installedAppsDescription() -> String {
+        let applicationsURL = URL(fileURLWithPath: "/Applications")
+        guard let contents = try? FileManager.default.contentsOfDirectory(at: applicationsURL, includingPropertiesForKeys: nil) else {
+            return "Unknown"
+        }
+        let appNames = contents
+            .filter { $0.pathExtension == "app" }
+            .map { $0.deletingPathExtension().lastPathComponent }
+            .sorted()
+        return appNames.isEmpty ? "Unknown" : appNames.joined(separator: ", ")
     }
 
     private func formattedToolCall(_ toolCall: ToolCallResponse) -> (name: String, args: String) {
@@ -327,7 +342,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             log("Onboarding not completed. Attempting to open settings window.")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 NSApp.activate(ignoringOtherApps: true)
-                if let url = URL(string: "jarvis://settings") {
+                if let url = URL(string: "secretary://settings") {
                     NSWorkspace.shared.open(url)
                 }
             }
@@ -370,17 +385,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Load from defaults or fall back to Control + Space
         let defaults = UserDefaults.standard
-        let hasStoredMod = defaults.object(forKey: "JarvisShortcutModifier") != nil
-        let hasStoredKey = defaults.object(forKey: "JarvisShortcutKey") != nil
-        let storedMod = defaults.integer(forKey: "JarvisShortcutModifier")
-        let storedKey = defaults.integer(forKey: "JarvisShortcutKey")
+        let hasStoredMod = defaults.object(forKey: "SecretaryShortcutModifier") != nil
+        let hasStoredKey = defaults.object(forKey: "SecretaryShortcutKey") != nil
+        let storedMod = defaults.integer(forKey: "SecretaryShortcutModifier")
+        let storedKey = defaults.integer(forKey: "SecretaryShortcutKey")
         let usesLegacyDefault = (storedMod == Int(shiftKey) && storedKey == 49) || (storedMod == Int(shiftKey) && storedKey == Int(kVK_ANSI_2))
         let shouldResetToDefault = !hasStoredMod || !hasStoredKey || usesLegacyDefault
         let effectiveModifiers = shouldResetToDefault ? ShortcutConfig.defaultModifier : storedMod
         let effectiveKey = shouldResetToDefault ? ShortcutConfig.defaultKey : storedKey
         if shouldResetToDefault {
-            defaults.set(ShortcutConfig.defaultModifier, forKey: "JarvisShortcutModifier")
-            defaults.set(ShortcutConfig.defaultKey, forKey: "JarvisShortcutKey")
+            defaults.set(ShortcutConfig.defaultModifier, forKey: "SecretaryShortcutModifier")
+            defaults.set(ShortcutConfig.defaultKey, forKey: "SecretaryShortcutKey")
         }
         lastModifiers = UInt32(effectiveModifiers)
         lastKeyCode = UInt32(effectiveKey)

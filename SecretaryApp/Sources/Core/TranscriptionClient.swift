@@ -1,6 +1,6 @@
 import Foundation
 
-struct WhisperClient {
+struct TranscriptionClient {
     let apiKey: String
     let model: String
     
@@ -27,14 +27,14 @@ struct WhisperClient {
         }
         guard (200..<300).contains(http.statusCode) else {
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw NSError(domain: "WhisperClient", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
+            throw NSError(domain: "TranscriptionClient", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }
         
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         if let text = json?["text"] as? String {
             return text
         }
-        throw NSError(domain: "WhisperClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "No text in response"])
+        throw NSError(domain: "TranscriptionClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "No text in response"])
     }
     
     private func makeMultipartBody(fileURL: URL, boundary: String) throws -> Data {

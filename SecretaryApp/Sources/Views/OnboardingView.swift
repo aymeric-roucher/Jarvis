@@ -17,7 +17,7 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 24) {
             VStack(spacing: 6) {
-                Text("Welcome to Jarvis")
+                Text("Welcome to Secretary")
                     .font(Theme.titleFont)
                     .foregroundColor(Theme.textColor)
                 Text("Your AI Secretary for macOS")
@@ -138,7 +138,7 @@ func loadAPIKeys(openaiKey: inout String, hfKey: inout String) {
     let possiblePaths = [
         URL(fileURLWithPath: ".env"), // Current dir
         home.appendingPathComponent(".env"),
-        home.appendingPathComponent("Documents/Code/Jarvis/.env")
+        home.appendingPathComponent("Documents/Code/Secretary/.env")
     ]
     
     for url in possiblePaths {

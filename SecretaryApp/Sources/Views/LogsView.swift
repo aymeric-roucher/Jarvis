@@ -15,7 +15,7 @@ struct LogsView: View {
 
             let appBundlePath = Bundle.main.bundleURL
             let projectRoot = appBundlePath.deletingLastPathComponent()
-            let logPath = projectRoot.appendingPathComponent("Jarvis_Log.txt").path
+            let logPath = projectRoot.appendingPathComponent("Secretary_Log.txt").path
 
             Text(logPath)
                 .font(.system(size: 12, design: .monospaced))
@@ -53,7 +53,7 @@ struct LogsView: View {
     func loadLogs() {
         let appBundlePath = Bundle.main.bundleURL
         let projectRoot = appBundlePath.deletingLastPathComponent()
-        let logFile = projectRoot.appendingPathComponent("Jarvis_Log.txt")
+        let logFile = projectRoot.appendingPathComponent("Secretary_Log.txt")
 
         if let content = try? String(contentsOf: logFile) {
             logContent = content
@@ -65,7 +65,7 @@ struct LogsView: View {
     func clearLogs() {
         let appBundlePath = Bundle.main.bundleURL
         let projectRoot = appBundlePath.deletingLastPathComponent()
-        let logFile = projectRoot.appendingPathComponent("Jarvis_Log.txt")
+        let logFile = projectRoot.appendingPathComponent("Secretary_Log.txt")
 
         try? "".write(to: logFile, atomically: true, encoding: .utf8)
         loadLogs()

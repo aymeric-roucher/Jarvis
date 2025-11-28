@@ -5,8 +5,8 @@ struct ShortcutRecorder: View {
     @State private var isRecording = false
     
     // Initial values loaded from UserDefaults or Defaults
-    @AppStorage("JarvisShortcutModifier") var savedModifier: Int = Int(shiftKey) // Default: Shift
-    @AppStorage("JarvisShortcutKey") var savedKey: Int = 49 // Default: Space
+    @AppStorage("SecretaryShortcutModifier") var savedModifier: Int = Int(controlKey) // Default: Ctrl
+    @AppStorage("SecretaryShortcutKey") var savedKey: Int = 49 // Default: Space
     
     @State private var displayModifier: String = ""
     @State private var displayKey: String = ""

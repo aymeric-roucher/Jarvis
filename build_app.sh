@@ -1,7 +1,7 @@
 #!/bin/bash
 
-APP_NAME="Jarvis"
-SCHEME_NAME="Jarvis"
+APP_NAME="Secretary"
+SCHEME_NAME="Secretary"
 BUILD_DIR=".build_xcode"
 APP_BUNDLE="$APP_NAME.app"
 
@@ -9,9 +9,9 @@ echo "Building $APP_NAME using xcodebuild..."
 
 # Clear previous app settings to ensure onboarding runs for testing purposes
 echo "Clearing previous app settings for a fresh run..."
-defaults delete com.aymeric.Jarvis || true # '|| true' prevents script from failing if settings don't exist
+defaults delete com.aymeric.Secretary || true # '|| true' prevents script from failing if settings don't exist
 # Truncate in-app log for clean runs
-: > Jarvis_Log.txt
+: > Secretary_Log.txt
 
 rm -rf "$BUILD_DIR"
 rm -rf "$APP_BUNDLE"
@@ -39,6 +39,9 @@ fi
 echo "Found binary at: $BINARY_PATH"
 cp "$BINARY_PATH" "$APP_BUNDLE/Contents/MacOS/"
 
+# Copy app icon
+cp "SecretaryApp/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/"
+
 # Create Info.plist
 cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -55,22 +58,24 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
     <string>1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSUIElement</key>
     <true/> <!-- Agent app, no dock icon -->
     <key>NSMicrophoneUsageDescription</key>
-    <string>Jarvis needs your microphone to listen to your commands.</string>
+    <string>Secretary needs your microphone to listen to your commands.</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Jarvis needs to control other applications to execute commands.</string>
+    <string>Secretary needs to control other applications to execute commands.</string>
     <key>NSAccessibilityUsageDescription</key>
-    <string>Jarvis needs accessibility permissions to type text for you.</string>
+    <string>Secretary needs accessibility permissions to type text for you.</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
             <key>CFBundleURLName</key>
-            <string>com.aymeric.Jarvis</string>
+            <string>com.aymeric.Secretary</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>jarvis</string>
+                <string>secretary</string>
             </array>
         </dict>
     </array>

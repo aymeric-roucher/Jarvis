@@ -8,7 +8,7 @@ struct Logger {
         // Log file adjacent to the App Bundle (project root when running from build)
         let appBundlePath = Bundle.main.bundleURL
         let projectRoot = appBundlePath.deletingLastPathComponent()
-        logFileURL = projectRoot.appendingPathComponent("Jarvis_Log.txt")
+        logFileURL = projectRoot.appendingPathComponent("Secretary_Log.txt")
         
         // Ensure file exists (create if not)
         if !FileManager.default.fileExists(atPath: logFileURL.path) {

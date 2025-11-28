@@ -44,10 +44,10 @@ class AudioRecorder: NSObject, ObservableObject {
         // 2. Proceed with recording if authorized
         do {
             let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let jarvisDir = docs.appendingPathComponent("Jarvis")
-            try? FileManager.default.createDirectory(at: jarvisDir, withIntermediateDirectories: true)
-            
-            let fileURL = jarvisDir.appendingPathComponent("recording.m4a")
+            let secretaryDir = docs.appendingPathComponent("Secretary")
+            try? FileManager.default.createDirectory(at: secretaryDir, withIntermediateDirectories: true)
+
+            let fileURL = secretaryDir.appendingPathComponent("recording.m4a")
             log("Recording to file: \(fileURL.path)")
             
             let settings: [String: Any] = [

@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "Jarvis",
+    name: "Secretary",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "Jarvis", targets: ["Jarvis"])
+        .executable(name: "Secretary", targets: ["Secretary"])
     ],
     dependencies: [
         // No external dependencies for now to keep it self-contained.
@@ -15,9 +15,9 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "Jarvis",
+            name: "Secretary",
             dependencies: [],
-            path: "JarvisApp/Sources",
+            path: "SecretaryApp/Sources",
             resources: [
                 .process("../Resources")
             ]

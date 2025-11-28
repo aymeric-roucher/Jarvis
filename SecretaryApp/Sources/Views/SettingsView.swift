@@ -7,7 +7,7 @@ struct SettingsView: View {
         HStack(spacing: 0) {
             // Sidebar
             VStack(alignment: .leading, spacing: 0) {
-                Text("JARVIS")
+                Text("SECRETARY")
                     .font(Theme.captionFont)
                     .foregroundColor(Theme.secondaryText)
                     .tracking(1.5)
@@ -401,6 +401,8 @@ struct DictionaryView: View {
     }
 }
 struct StyleView: View {
+    @StateObject private var store = StyleStore()
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Writing Style")
@@ -416,9 +418,12 @@ struct StyleView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
 
-            ThemedTextArea(placeholder: "", text: .constant("Hi [Name],\n\nThanks for reaching out..."), height: 220)
+            ThemedTextArea(placeholder: "Hi [Name],\n\nThanks for reaching out...", text: $store.styleText, height: 220)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
+                .onChange(of: store.styleText) { _, _ in
+                    store.save()
+                }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.background)
@@ -470,7 +475,7 @@ struct GeneralSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("About").font(Theme.headingFont).foregroundColor(Theme.textColor)
-                    Text("Jarvis v1.0").font(Theme.bodyFont).foregroundColor(Theme.secondaryText).italic()
+                    Text("Secretary v1.0").font(Theme.bodyFont).foregroundColor(Theme.secondaryText).italic()
                 }
             }
             .padding(24)

@@ -1,41 +1,95 @@
-# Jarvis - macOS AI Secretary
+# Secretary - macOS AI Secretary
 
-A native macOS secretary app integrated with the Gemini Live API (Multimodal) for real-time voice command processing and tool execution.
+A native macOS voice assistant that listens to your commands and executes actions like typing text, opening apps, and more.
 
-## Architecture
+## How It Works
 
-Jarvis uses a streamlined architecture powered by Google's Gemini Live API (WebSocket):
+```
+Voice Input → OpenAI Whisper → Cerebras LLM → Tool Execution
+```
 
-1.  **Voice Input**: Captures audio from the microphone.
-2.  **Gemini Live API**: Sends audio directly to Gemini (model: `gemini-live-2.5-flash-preview`).
-3.  **Direct Tool Calling**: The Gemini model processes the audio, transcribes it, and determines if a tool needs to be called (e.g., typing text, opening apps) in a single session.
-4.  **Tool Execution**: The app executes the requested tool locally on macOS.
+1. **Voice Capture**: Press and hold the global hotkey to record your voice
+2. **Transcription**: Audio is sent to OpenAI Whisper for speech-to-text
+3. **Command Routing**: Transcript is processed by Cerebras (Qwen model) to determine the action
+4. **Execution**: The appropriate tool is executed locally on your Mac
 
 ## Tools
 
-The following tools are available to the AI:
-- `type(text: String)`: Type text into the active window.
-- `open_app(target: String)`: Open an application or URL.
-- `switch_to(app_name: String)`: Switch focus to a running application.
+| Tool | Description | Example |
+|------|-------------|---------|
+| `type` | Types text into the active window | "Type hello world" |
+| `open_app` | Opens an application or URL | "Open Safari" or "Open github.com" |
+| `switch_to` | Switches focus to a running app | "Switch to Slack" |
+| `deep_research` | Opens a Google search | "Research Swift concurrency" |
 
 ## Setup
 
-1.  Launch Jarvis.
-2.  Go to **Settings**.
-3.  Enter your **Gemini API Key**.
-4.  Grant Microphone and Accessibility permissions.
-5.  Use the global hotkey (default: `@`, i.e. Shift+2) to talk to Jarvis.
+1. Build and launch the app
+2. Complete onboarding:
+   - Enter your **OpenAI API Key** (for Whisper transcription)
+   - Enter your **Hugging Face Token** (for Cerebras routing)
+   - Grant **Microphone** permission
+   - Grant **Accessibility** permission (for typing)
+3. Configure your preferred hotkey (default: Shift+Space)
+4. Press "Finish" when all checks pass
 
-## Implementation Details
+## Usage
 
-- **Core**: `JarvisApp/Sources/Core`
-    - `GeminiClient.swift`: Manages the WebSocket connection to Gemini Live API.
-    - `ToolManager.swift`: Handles macOS system interactions (AppleScript/Accessibility).
-    - `AudioRecorder.swift`: Handles audio capture.
-- **UI**: `JarvisApp/Sources/Views`
-    - SwiftUI-based interface for Settings and the Spotlight overlay.
+1. Press and hold your hotkey
+2. Speak your command
+3. Release the hotkey
+4. Watch the popup show your transcript and action result
+
+## Project Structure
+
+```
+SecretaryApp/
+├── Sources/
+│   ├── SecretaryApp.swift       # Entry point, AppState, hotkey handling
+│   ├── Core/
+│   │   ├── AudioRecorder.swift  # Microphone capture with level monitoring
+│   │   ├── WhisperClient.swift  # OpenAI Whisper API integration
+│   │   ├── CerebrasClient.swift # HuggingFace/Cerebras command routing
+│   │   └── ToolManager.swift    # macOS tool execution (type, open, switch)
+│   ├── Views/
+│   │   ├── Theme.swift          # Theming system, fonts, colors, icons
+│   │   ├── SettingsView.swift   # Main dashboard with tabs
+│   │   ├── MenuPopup.swift      # Floating overlay during recording
+│   │   ├── OnboardingView.swift # First-launch setup wizard
+│   │   ├── ConfigSections.swift # API keys and permissions UI
+│   │   ├── ShortcutRecorder.swift # Hotkey configuration
+│   │   ├── WaveformView.swift   # Real-time audio visualization
+│   │   └── LogsView.swift       # Log file viewer
+│   └── Utils/
+│       ├── Logger.swift         # File-based logging
+│       ├── DictionaryStore.swift # Custom word storage
+│       ├── SoundPlayer.swift    # Audio feedback
+│       └── CrashLogger.swift    # Exception handling
+```
 
 ## Requirements
 
-- macOS 13.0+
-- Google Gemini API Key
+- macOS 14.0+ (Sonoma)
+- OpenAI API Key
+- Hugging Face Token
+
+## Building
+
+```bash
+cd SecretaryApp
+swift build
+swift run
+```
+
+## Configuration Storage
+
+Settings are stored in UserDefaults:
+- `openaiApiKey` - OpenAI API key
+- `hfApiKey` - Hugging Face token
+- `SecretaryShortcutModifier` - Hotkey modifier
+- `SecretaryShortcutKey` - Hotkey key code
+- `hasCompletedOnboarding` - Setup completion flag
+
+Audio recordings are saved to `~/Documents/Secretary/recording.m4a`
+
+Logs are written to `Secretary_Log.txt` in the app directory
