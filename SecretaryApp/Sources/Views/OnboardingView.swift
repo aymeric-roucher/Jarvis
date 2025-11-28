@@ -58,6 +58,13 @@ struct OnboardingView: View {
                                    checkAccess: checkAccessibility)
             }
 
+            Divider().overlay(Theme.borderColor)
+
+            VStack(alignment: .leading, spacing: 12) {
+                LaunchAtLoginSection()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             HStack {
                 Spacer()
                 Button("Finish") {
@@ -68,7 +75,7 @@ struct OnboardingView: View {
             }
         }
         .padding(32)
-        .frame(maxWidth: 500)
+        .frame(maxWidth: 580)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(Theme.background)
         .onAppear {

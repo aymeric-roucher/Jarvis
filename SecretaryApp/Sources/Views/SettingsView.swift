@@ -508,6 +508,10 @@ struct GeneralSettingsView: View {
 
                 Divider().overlay(Theme.borderColor)
 
+                LaunchAtLoginSection()
+
+                Divider().overlay(Theme.borderColor)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("About").font(Theme.headingFont).foregroundColor(Theme.textColor)
                     Text("Secretary v1.0").font(Theme.bodyFont).foregroundColor(Theme.secondaryText).italic()

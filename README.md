@@ -78,9 +78,12 @@ SecretaryApp/
 ## Building
 
 ```bash
-cd SecretaryApp
-swift build
-swift run
+./build_app.sh
+```
+
+Then launch the app:
+```bash
+open Secretary.app
 ```
 
 ## Configuration Storage

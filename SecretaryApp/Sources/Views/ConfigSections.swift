@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import ApplicationServices
+import ServiceManagement
 
 enum ValidationStatus {
     case none, checking, valid, invalid
@@ -41,7 +42,7 @@ struct ApiKeysSection: View {
                 Button("Check APIs") { onApiKeysValidate() }.buttonStyle(ThemeButtonStyle())
             }
 
-            HStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
                 Text("OpenAI")
                     .font(Theme.smallFont)
                     .foregroundColor(Theme.secondaryText)
@@ -58,7 +59,7 @@ struct ApiKeysSection: View {
                 StatusIcon(status: openaiStatus)
             }
 
-            HStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
                 Text("Hugging Face")
                     .font(Theme.smallFont)
                     .foregroundColor(Theme.secondaryText)
@@ -88,32 +89,75 @@ struct PermissionsSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Permissions").font(Theme.headingFont).foregroundColor(Theme.textColor)
 
-            HStack {
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(Theme.textColor)
-                    .frame(width: 20)
-                Text("Microphone").font(Theme.bodyFont).foregroundColor(Theme.textColor)
-                Spacer()
-                StatusIcon(status: micStatus)
-                Button("Request") { requestMic() }
-                    .buttonStyle(ThemeButtonStyle(disabled: micStatus == .valid))
-                    .disabled(micStatus == .valid)
+            HStack(spacing: 12) {
+                // Microphone permission
+                HStack(spacing: 8) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.textColor)
+                    Text("Microphone").font(Theme.bodyFont).foregroundColor(Theme.textColor)
+                    Spacer()
+                    StatusIcon(status: micStatus)
+                    Button("Request") { requestMic() }
+                        .buttonStyle(ThemeButtonStyle(disabled: micStatus == .valid))
+                        .disabled(micStatus == .valid)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Theme.inputBackground)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+
+                // Accessibility permission
+                HStack(spacing: 8) {
+                    Image(systemName: "keyboard.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Theme.textColor)
+                    Text("Typing").font(Theme.bodyFont).foregroundColor(Theme.textColor)
+                    Spacer()
+                    StatusIcon(status: accessStatus)
+                    Button("Check") { checkAccess() }
+                        .buttonStyle(ThemeButtonStyle())
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Theme.inputBackground)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
             }
-            .padding(12)
-            .background(Theme.inputBackground)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-            .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius).stroke(Theme.borderColor, lineWidth: 1))
+        }
+    }
+}
+
+struct LaunchAtLoginSection: View {
+    @State private var isEnabled: Bool = SMAppService.mainApp.status == .enabled
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Startup").font(Theme.headingFont).foregroundColor(Theme.textColor)
 
             HStack {
-                Image(systemName: "keyboard.fill")
+                Image(systemName: "power")
                     .font(.system(size: 14))
                     .foregroundColor(Theme.textColor)
                     .frame(width: 20)
-                Text("Accessibility (Typing)").font(Theme.bodyFont).foregroundColor(Theme.textColor)
+                Text("Launch at Login").font(Theme.bodyFont).foregroundColor(Theme.textColor)
                 Spacer()
-                StatusIcon(status: accessStatus)
-                Button("Check") { checkAccess() }.buttonStyle(ThemeButtonStyle())
+                Toggle("", isOn: $isEnabled)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .onChange(of: isEnabled) { _, newValue in
+                        do {
+                            if newValue {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                        } catch {
+                            log("Failed to update launch at login: \(error)")
+                            isEnabled = SMAppService.mainApp.status == .enabled
+                        }
+                    }
             }
             .padding(12)
             .background(Theme.inputBackground)
@@ -125,7 +169,7 @@ struct PermissionsSection: View {
 
 struct StatusIcon: View {
     var status: ValidationStatus
-    
+
     var body: some View {
         Image(systemName: status.icon)
             .foregroundColor(status.color)
@@ -147,7 +191,7 @@ struct LanguageSelectionSection: View {
             Text("Languages").font(Theme.headingFont).foregroundColor(Theme.textColor)
 
             GeometryReader { geometry in
-                HStack(alignment: .top, spacing: 16) {
+                HStack(alignment: .center, spacing: 16) {
                     // Left side: search field with suggestions (1/3 width)
                     VStack(alignment: .leading, spacing: 0) {
                         TextField("Type to add...", text: $searchText)
