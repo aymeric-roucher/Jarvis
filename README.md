@@ -15,12 +15,12 @@ Voice Input → OpenAI Whisper → Cerebras LLM → Tool Execution
 
 ## Tools
 
-| Tool | Description | Example |
-|------|-------------|---------|
-| `type` | Types text into the active window | "Type hello world" |
-| `open_app` | Opens an application or URL | "Open Safari" or "Open github.com" |
-| `switch_to` | Switches focus to a running app | "Switch to Slack" |
-| `deep_research` | Opens a Google search | "Research Swift concurrency" |
+| Tool            | Description                       | Example                            |
+| --------------- | --------------------------------- | ---------------------------------- |
+| `type`          | Types text into the active window | "Type hello world"                 |
+| `open_app`      | Opens an application or URL       | "Open Safari" or "Open github.com" |
+| `switch_to`     | Switches focus to a running app   | "Switch to Slack"                  |
+| `deep_research` | Opens a Google search             | "Research Swift concurrency"       |
 
 ## Setup
 
@@ -45,26 +45,28 @@ Voice Input → OpenAI Whisper → Cerebras LLM → Tool Execution
 ```
 SecretaryApp/
 ├── Sources/
-│   ├── SecretaryApp.swift       # Entry point, AppState, hotkey handling
+│   ├── SecretaryApp.swift          # Entry point, AppState, hotkey handling
 │   ├── Core/
-│   │   ├── AudioRecorder.swift  # Microphone capture with level monitoring
-│   │   ├── WhisperClient.swift  # OpenAI Whisper API integration
-│   │   ├── CerebrasClient.swift # HuggingFace/Cerebras command routing
-│   │   └── ToolManager.swift    # macOS tool execution (type, open, switch)
+│   │   ├── AudioRecorder.swift     # Microphone capture with level monitoring
+│   │   ├── TranscriptionClient.swift # OpenAI Whisper API integration
+│   │   ├── ThinkingClient.swift    # HuggingFace/Cerebras command routing
+│   │   └── ToolManager.swift       # macOS tool execution (type, open, switch)
 │   ├── Views/
-│   │   ├── Theme.swift          # Theming system, fonts, colors, icons
-│   │   ├── SettingsView.swift   # Main dashboard with tabs
-│   │   ├── MenuPopup.swift      # Floating overlay during recording
-│   │   ├── OnboardingView.swift # First-launch setup wizard
-│   │   ├── ConfigSections.swift # API keys and permissions UI
-│   │   ├── ShortcutRecorder.swift # Hotkey configuration
-│   │   ├── WaveformView.swift   # Real-time audio visualization
-│   │   └── LogsView.swift       # Log file viewer
+│   │   ├── Theme.swift             # Theming system, fonts, colors, icons
+│   │   ├── SettingsView.swift      # Main dashboard with tabs (Home, Dictionary, Style, Settings)
+│   │   ├── MenuPopup.swift         # Floating overlay during recording
+│   │   ├── OnboardingView.swift    # First-launch setup wizard
+│   │   ├── ConfigSections.swift    # API keys, permissions, language selection UI
+│   │   ├── ShortcutRecorder.swift  # Hotkey configuration
+│   │   ├── WaveformView.swift      # Real-time audio visualization
+│   │   └── LogsView.swift          # Log file viewer
 │   └── Utils/
-│       ├── Logger.swift         # File-based logging
-│       ├── DictionaryStore.swift # Custom word storage
-│       ├── SoundPlayer.swift    # Audio feedback
-│       └── CrashLogger.swift    # Exception handling
+│       ├── Logger.swift            # File-based logging
+│       ├── DictionaryStore.swift   # Custom word/correction storage
+│       ├── LanguageStore.swift     # Language selection for transcription
+│       ├── StyleStore.swift        # Writing style examples storage
+│       ├── SoundPlayer.swift       # Audio feedback
+│       └── CrashLogger.swift       # Exception handling
 ```
 
 ## Requirements
@@ -93,3 +95,12 @@ Settings are stored in UserDefaults:
 Audio recordings are saved to `~/Documents/Secretary/recording.m4a`
 
 Logs are written to `Secretary_Log.txt` in the app directory
+
+### Making an installer package
+
+https://www.itech4mac.net/2025/04/how-to-create-a-dmg-installer-for-you-applications-on-macos/
+
+
+### License
+
+Apache 2.0. You can just credit Aymeric Roucher for the app, and Raphaël Doan for the visual theme!
